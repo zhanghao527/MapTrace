@@ -1,0 +1,23 @@
+# Java
+server/target/
+*.class
+*.jar
+*.war
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# 小程序
+miniprogram/node_modules/
+miniprogram/miniprogram_npm/
+
+# 环境配置
+*.env
+*.env.local
+server/.env
+miniprogram/project.private.config.json
+server/src/main/resources/application-local.yml

@@ -1,0 +1,27 @@
+<!-- 地图主页 -->
+<view class="container">
+  <map
+    id="map"
+    class="map"
+    latitude="{{latitude}}"
+    longitude="{{longitude}}"
+    scale="{{scale}}"
+    markers="{{markers}}"
+    show-location
+    bindmarkertap="onMarkerTap"
+  />
+
+  <!-- 时间筛选轴 -->
+  <view class="time-bar">
+    <picker mode="date" value="{{selectedDate}}" bindchange="onDateChange">
+      <view class="date-picker">
+        {{selectedDate || '选择日期'}}
+      </view>
+    </picker>
+  </view>
+
+  <!-- 上传按钮 -->
+  <view class="upload-btn" bindtap="goUpload">
+    <text>+</text>
+  </view>
+</view>

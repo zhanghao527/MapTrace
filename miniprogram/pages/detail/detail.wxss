@@ -1,0 +1,37 @@
+/* 图片详情页样式 */
+.container {
+  padding: 30rpx;
+}
+
+.photo {
+  width: 100%;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+}
+
+.info-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+}
