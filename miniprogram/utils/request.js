@@ -24,7 +24,7 @@ function request(url, method, data) {
           }
           app.logout();
           wx.showToast({ title: '请先登录', icon: 'none' });
-          wx.switchTab({ url: '/pages/profile/profile' });
+          wx.navigateTo({ url: '/pages/profile/profile' });
           reject(res.data);
         } else {
           reject(res.data);
@@ -57,7 +57,7 @@ function uploadFile(url, filePath, formData) {
         } else if (data.code === 401) {
           app.logout();
           wx.showToast({ title: '请先登录', icon: 'none' });
-          wx.switchTab({ url: '/pages/profile/profile' });
+          wx.navigateTo({ url: '/pages/profile/profile' });
           reject(data);
         } else {
           reject(data);
@@ -76,7 +76,7 @@ function uploadFile(url, filePath, formData) {
 function checkLogin() {
   if (!app.isLoggedIn()) {
     wx.showToast({ title: '请先登录', icon: 'none' });
-    wx.switchTab({ url: '/pages/profile/profile' });
+    wx.navigateTo({ url: '/pages/profile/profile' });
     return false;
   }
   return true;
