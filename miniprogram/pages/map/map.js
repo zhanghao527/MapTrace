@@ -58,6 +58,7 @@ Page({
     tapLng: 0,
     tapLocationName: '',
     uploadDate: '',
+    todayDate: '',
     uploadDateDisplay: '今天',
     selectedImages: [],
     // 上传状态
@@ -88,7 +89,7 @@ Page({
     this._qqmapsdk = new QQMapWX({ key: app.globalData.mapKey });
 
     const today = this._formatDate(new Date());
-    this.setData({ uploadDate: today, uploadDateDisplay: '今天' });
+    this.setData({ uploadDate: today, todayDate: today, uploadDateDisplay: '今天' });
 
     this._restoreFilterState();
     this.getCurrentLocation();
@@ -632,22 +633,20 @@ Page({
           longitude: this.data.tapLng,
           iconPath: '/images/marker-transparent.png',
           width: 1, height: 1,
+          zIndex: 999,
           customCallout: { anchorY: 0, anchorX: 0, display: 'ALWAYS' }
         });
         this.setData({ tempPreviewImage: this.data.selectedImages[0] });
       } else {
-        // 没选照片时用文字 callout
+        // 没选照片时用 customCallout（和照片标记同层，WXML 顺序靠后 = 在上面）
         markers.push({
           id: TEMP_MARKER_ID,
           latitude: this.data.tapLat,
           longitude: this.data.tapLng,
           iconPath: '/images/marker-temp.png',
           width: 44, height: 44,
-          callout: {
-            content: '上传位置', color: '#07c160', fontSize: 13,
-            borderRadius: 8, padding: 6, display: 'ALWAYS',
-            bgColor: '#fff', borderWidth: 1, borderColor: '#07c160'
-          }
+          zIndex: 999,
+          customCallout: { anchorY: 0, anchorX: 0, display: 'ALWAYS' }
         });
         this.setData({ tempPreviewImage: '' });
       }
@@ -662,6 +661,11 @@ Page({
   onUploadDateChange(e) {
     const date = e.detail.value;
     const today = this._formatDate(new Date());
+    // 不允许选择未来日期
+    if (date > today) {
+      this._showToast('不能选择未来日期');
+      return;
+    }
     this.setData({
       uploadDate: date,
       uploadDateDisplay: (date === today) ? '今天' : date
@@ -674,6 +678,24 @@ Page({
     wx.chooseMedia({
       count: remaining,
       mediaType: ['image'],
+      sizeType: ['compressed'],
+      success: (res) => {
+        const newImages = res.tempFiles.map(f => f.tempFilePath);
+        this.setData({
+          selectedImages: [...this.data.selectedImages, ...newImages]
+        });
+        this._rebuildMarkers();
+      }
+    });
+  },
+
+  onTakePhoto() {
+    const remaining = 9 - this.data.selectedImages.length;
+    if (remaining <= 0) { this._showToast('最多选择9张'); return; }
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['camera'],
       sizeType: ['compressed'],
       success: (res) => {
         const newImages = res.tempFiles.map(f => f.tempFilePath);
@@ -769,6 +791,7 @@ Page({
           this._currentLat = res.latitude;
           this._currentLng = res.longitude;
           this._updateDistrict(res.latitude, res.longitude);
+          this.debouncedLoadPhotos();
         }
       });
       this._checkLocateVisible();

@@ -47,7 +47,7 @@
     <view class="upload-float-row">
       <image class="upload-float-icon" src="/images/icon-location.svg" />
       <text class="upload-float-addr">{{tapLocationName}}</text>
-      <picker mode="date" value="{{uploadDate}}" bindchange="onUploadDateChange">
+      <picker mode="date" value="{{uploadDate}}" end="{{todayDate}}" bindchange="onUploadDateChange">
         <view class="upload-float-date">
           <image class="upload-float-icon-sm" src="/images/icon-calendar.svg" />
           <text>{{uploadDateDisplay}}</text>
@@ -65,6 +65,9 @@
               <view class="upload-float-img-remove" bindtap="onRemoveImage" data-idx="{{index}}">✕</view>
             </view>
           </block>
+          <view class="upload-float-img-add" bindtap="onTakePhoto" wx:if="{{uploadDateDisplay === '今天' && selectedImages.length < 9}}">
+            <image class="upload-float-add-icon" src="/images/icon-camera.svg" />
+          </view>
           <view class="upload-float-img-add" bindtap="onChooseImages" wx:if="{{selectedImages.length < 9}}">
             <image class="upload-float-add-icon" src="/images/icon-plus.svg" />
           </view>
@@ -126,14 +129,18 @@
         </cover-view>
       </cover-view>
     </block>
-    <!-- 临时上传标记：选了照片后显示缩略图预览 -->
-    <cover-view slot="callout" marker-id="99999" wx:if="{{tempPreviewImage}}">
-      <cover-view class="photo-callout">
+    <!-- 临时上传标记：始终在最上层 -->
+    <cover-view slot="callout" marker-id="99999" wx:if="{{showUploadBar || showHidePhotosBar}}">
+      <cover-view class="photo-callout" wx:if="{{tempPreviewImage}}">
         <cover-view class="photo-card temp-card">
           <cover-image class="photo-thumb" src="{{tempPreviewImage}}" />
           <cover-view class="photo-count temp-count" wx:if="{{selectedImages.length > 1}}">{{selectedImages.length}}</cover-view>
         </cover-view>
         <cover-view class="photo-arrow temp-arrow"></cover-view>
+      </cover-view>
+      <cover-view class="upload-callout" wx:else>
+        <cover-view class="upload-callout-text">上传位置</cover-view>
+        <cover-view class="upload-callout-arrow"></cover-view>
       </cover-view>
     </cover-view>
   </map>
