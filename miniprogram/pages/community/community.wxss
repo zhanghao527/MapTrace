@@ -1,0 +1,527 @@
+/* ===== 页面容器 ===== */
+.community-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
+}
+.community-page.page-locked {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ===== 区域名称栏 ===== */
+.district-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  gap: 8rpx;
+  background: #f5f5f5;
+}
+.district-bar:active {
+  opacity: 0.7;
+}
+.district-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+.district-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.district-arrow {
+  font-size: 24rpx;
+  color: #999;
+  flex-shrink: 0;
+  margin-left: 4rpx;
+}
+
+/* ===== 月份快捷导航 ===== */
+.month-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(245, 245, 245, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.04);
+  height: 72rpx;
+  white-space: nowrap;
+}
+.month-nav-inner {
+  display: inline-flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 24rpx;
+  gap: 16rpx;
+}
+.month-tag {
+  flex-shrink: 0;
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 24rpx;
+  font-size: 24rpx;
+  color: #888;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 24rpx;
+  transition: all 0.2s ease;
+}
+.month-tag.active {
+  color: #fff;
+  background: #07c160;
+  font-weight: 600;
+}
+.month-tag:active {
+  opacity: 0.7;
+}
+
+/* ===== 时间轴布局常量 ===== */
+/* 轴线区域宽度 80rpx，轴线居中在 40rpx 处 */
+
+.timeline {
+  padding-top: 12rpx;
+}
+
+/* ===== 轴线列（公共） ===== */
+.tl-axis-col {
+  width: 80rpx;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* ===== 轴线竖线 ===== */
+.tl-line {
+  width: 4rpx;
+  background: #e0e0e0;
+  flex: 1;
+}
+.tl-line.hidden {
+  background: transparent;
+}
+.tl-line-top {
+  /* 从顶部到圆点 */
+}
+.tl-line-bottom {
+  /* 从圆点到底部 */
+}
+.tl-line-full {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4rpx;
+  background: #e0e0e0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ===== 日期节点圆点 ===== */
+.tl-dot-date {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #fff;
+  border: 4rpx solid #c0c0c0;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.tl-dot-date.active {
+  border-color: #07c160;
+  background: #07c160;
+}
+.tl-dot-date:active {
+  transform: scale(1.3);
+}
+
+/* ===== 照片小圆点 ===== */
+.tl-dot-photo {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #d0d0d0;
+  flex-shrink: 0;
+  z-index: 2;
+  position: absolute;
+  top: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tl-dot-photo.active {
+  width: 18rpx;
+  height: 18rpx;
+  background: #07c160;
+}
+
+/* ===== 轴线终止圆点 ===== */
+.tl-dot-end {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #e0e0e0;
+  flex-shrink: 0;
+}
+
+/* ===== 日期标题行 ===== */
+.tl-date-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 72rpx;
+}
+.tl-date-row .tl-axis-col {
+  justify-content: center;
+}
+.tl-date-row .tl-line-top,
+.tl-date-row .tl-line-bottom {
+  flex: 1;
+  min-height: 12rpx;
+}
+.tl-date-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx 16rpx 0;
+  gap: 10rpx;
+}
+.tl-date-text {
+  font-size: 26rpx;
+  color: #555;
+  font-weight: 600;
+}
+.tl-date-text.today {
+  color: #07c160;
+}
+.tl-date-count {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+/* ===== 照片卡片行 ===== */
+.tl-card-row {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  min-height: 100rpx;
+}
+.tl-card-row .tl-axis-col {
+  min-height: 100%;
+}
+
+/* 连接横线 */
+.tl-connector {
+  position: absolute;
+  left: -16rpx;
+  top: 36rpx;
+  width: 16rpx;
+  height: 3rpx;
+  background: #e0e0e0;
+}
+
+.tl-card-wrap {
+  flex: 1;
+  position: relative;
+  padding: 0 24rpx 20rpx 0;
+  min-width: 0;
+}
+
+/* ===== 照片卡片 ===== */
+.photo-card {
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+.photo-card:active {
+  opacity: 0.85;
+}
+.card-image {
+  width: 100%;
+  max-height: 800rpx;
+  display: block;
+}
+.card-info {
+  padding: 20rpx 24rpx;
+}
+.card-user {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.card-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+  background: #f0f0f0;
+}
+.card-nickname {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.card-location {
+  font-size: 22rpx;
+  color: #07c160;
+  background: #f0f9f0;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+  max-width: 360rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-date {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* ===== 轴线终止 ===== */
+.tl-end {
+  display: flex;
+  height: 40rpx;
+}
+.tl-end .tl-axis-col {
+  justify-content: flex-start;
+}
+.tl-end .tl-line-top {
+  flex: 0 0 12rpx;
+}
+
+/* ===== 空状态 ===== */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 200rpx 60rpx 0;
+}
+.empty-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+.empty-line {
+  width: 4rpx;
+  height: 120rpx;
+  background: repeating-linear-gradient(
+    to bottom,
+    #d0d0d0 0,
+    #d0d0d0 8rpx,
+    transparent 8rpx,
+    transparent 16rpx
+  );
+}
+.empty-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 4rpx solid #d0d0d0;
+  background: #fff;
+  margin-top: -2rpx;
+}
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+  text-align: center;
+}
+
+/* ===== 加载提示 ===== */
+.loading-tip {
+  text-align: center;
+  padding: 32rpx 0;
+  font-size: 24rpx;
+  color: #bbb;
+}
+.loading-tip.end {
+  padding-left: 80rpx;
+}
+
+/* ===== 轴线可点击区域 ===== */
+.tl-axis-tap {
+  cursor: pointer;
+}
+.tl-axis-tap:active .tl-dot-date {
+  transform: scale(1.2);
+}
+
+/* ===== 时间轴展开面板遮罩 ===== */
+.panel-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100;
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+.panel-mask.show {
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+}
+
+/* ===== 时间轴展开面板 ===== */
+.panel-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280rpx;
+  z-index: 110;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 4rpx 0 24rpx rgba(0, 0, 0, 0.08);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+.panel-drawer.show {
+  transform: translateX(0);
+}
+
+/* 右侧轴线装饰 */
+.panel-axis-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 4rpx;
+  background: #07c160;
+  opacity: 0.3;
+}
+
+/* 顶部/底部渐变遮罩 */
+.panel-fade-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48rpx;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.96), transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+.panel-fade-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48rpx;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.96), transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 日期列表滚动区 */
+.panel-scroll {
+  flex: 1;
+  height: 100%;
+}
+.panel-list {
+  padding: 60rpx 0 calc(env(safe-area-inset-bottom) + 60rpx);
+}
+
+/* 月份分隔 */
+.panel-month {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 20rpx 12rpx;
+  gap: 12rpx;
+}
+.panel-month-line {
+  flex: 1;
+  height: 1rpx;
+  background: #e8e8e8;
+}
+.panel-month-text {
+  font-size: 20rpx;
+  color: #bbb;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 日期项 */
+.panel-date-item {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 20rpx;
+  gap: 14rpx;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.panel-date-item:active {
+  transform: scale(0.97);
+}
+.panel-date-item.active {
+  background: rgba(7, 193, 96, 0.08);
+}
+
+/* 面板内圆点 */
+.panel-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: #fff;
+  border: 3rpx solid #c0c0c0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.panel-dot.active {
+  border-color: #07c160;
+  background: #07c160;
+  box-shadow: 0 0 0 4rpx rgba(7, 193, 96, 0.15);
+}
+
+/* 日期信息 */
+.panel-date-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.panel-date-main {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.panel-date-item.active .panel-date-main {
+  color: #07c160;
+}
+.panel-date-item.today .panel-date-main {
+  color: #07c160;
+}
+.panel-date-sub {
+  font-size: 20rpx;
+  color: #999;
+  line-height: 1.3;
+}
+.panel-date-item.active .panel-date-sub {
+  color: #07c160;
+  opacity: 0.7;
+}
+
+/* 照片数量 */
+.panel-date-count {
+  font-size: 20rpx;
+  color: #bbb;
+  flex-shrink: 0;
+}
+.panel-date-item.active .panel-date-count {
+  color: #07c160;
+  opacity: 0.7;
+}

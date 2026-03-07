@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import com.timemap.model.dto.CommunityPhotoResponse;
 import java.util.List;
 
 @Mapper
@@ -41,4 +42,46 @@ public interface PhotoMapper extends BaseMapper<Photo> {
                                           @Param("radiusKm") double radiusKm,
                                           @Param("startDate") String startDate,
                                           @Param("endDate") String endDate);
+
+    @Select("""
+        <script>
+        SELECT p.id, p.image_url, p.thumbnail_url, p.longitude, p.latitude,
+               p.location_name, p.photo_date, u.nickname, u.avatar_url
+        FROM t_photo p
+        LEFT JOIN t_user u ON p.user_id = u.id
+        WHERE p.deleted = 0
+          AND p.latitude  BETWEEN #{lat} - (#{radiusKm} / 111.0) AND #{lat} + (#{radiusKm} / 111.0)
+          AND p.longitude BETWEEN #{lng} - (#{radiusKm} / (111.0 * COS(RADIANS(#{lat})))) AND #{lng} + (#{radiusKm} / (111.0 * COS(RADIANS(#{lat}))))
+          AND (6371 * 2 * ASIN(SQRT(
+                   POW(SIN(RADIANS(p.latitude - #{lat}) / 2), 2) +
+                   COS(RADIANS(#{lat})) * COS(RADIANS(p.latitude)) *
+                   POW(SIN(RADIANS(p.longitude - #{lng}) / 2), 2)
+               ))) &lt;= #{radiusKm}
+        ORDER BY p.photo_date DESC, p.id DESC
+        LIMIT #{offset}, #{size}
+        </script>
+    """)
+    List<CommunityPhotoResponse> findCommunity(@Param("lat") double lat,
+                                                @Param("lng") double lng,
+                                                @Param("radiusKm") double radiusKm,
+                                                @Param("offset") int offset,
+                                                @Param("size") int size);
+
+    @Select("""
+        <script>
+        SELECT COUNT(*) FROM t_photo
+        WHERE deleted = 0
+          AND latitude  BETWEEN #{lat} - (#{radiusKm} / 111.0) AND #{lat} + (#{radiusKm} / 111.0)
+          AND longitude BETWEEN #{lng} - (#{radiusKm} / (111.0 * COS(RADIANS(#{lat})))) AND #{lng} + (#{radiusKm} / (111.0 * COS(RADIANS(#{lat}))))
+          AND (6371 * 2 * ASIN(SQRT(
+                   POW(SIN(RADIANS(latitude - #{lat}) / 2), 2) +
+                   COS(RADIANS(#{lat})) * COS(RADIANS(latitude)) *
+                   POW(SIN(RADIANS(longitude - #{lng}) / 2), 2)
+               ))) &lt;= #{radiusKm}
+        </script>
+    """)
+    long countCommunity(@Param("lat") double lat,
+                        @Param("lng") double lng,
+                        @Param("radiusKm") double radiusKm);
+
 }

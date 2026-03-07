@@ -102,4 +102,17 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public com.timemap.model.dto.CommunityPageResponse findCommunity(double lat, double lng, double radiusKm, int page, int size) {
+        int offset = (page - 1) * size;
+        var list = photoMapper.findCommunity(lat, lng, radiusKm, offset, size);
+        long total = photoMapper.countCommunity(lat, lng, radiusKm);
+        var resp = new com.timemap.model.dto.CommunityPageResponse();
+        resp.setList(list);
+        resp.setTotal(total);
+        resp.setHasMore(offset + size < total);
+        return resp;
+    }
+
 }

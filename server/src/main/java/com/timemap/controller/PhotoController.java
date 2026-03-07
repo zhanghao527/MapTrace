@@ -60,4 +60,16 @@ public class PhotoController {
         List<PhotoDetailResponse> list = photoService.getBatchDetail(ids);
         return Result.ok(list);
     }
+
+    @GetMapping("/community")
+    public Result<com.timemap.model.dto.CommunityPageResponse> community(
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude,
+            @RequestParam(value = "radius", defaultValue = "10") double radius,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        com.timemap.model.dto.CommunityPageResponse data = photoService.findCommunity(latitude, longitude, radius, page, size);
+        return Result.ok(data);
+    }
+
 }

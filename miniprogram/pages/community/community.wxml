@@ -1,0 +1,141 @@
+<view class="community-page {{timelineExpanded ? 'page-locked' : ''}}">
+
+  <!-- 区域名称栏 -->
+  <view class="district-bar" bindtap="onDistrictTap" wx:if="{{districtName}}">
+    <image class="district-icon" src="/images/icon-location.svg" />
+    <text class="district-name">{{districtName}}</text>
+    <text class="district-arrow">▸</text>
+  </view>
+
+  <!-- 月份快捷导航 -->
+  <scroll-view class="month-nav" scroll-x enhanced show-scrollbar="{{false}}" wx:if="{{months.length > 1}}">
+    <view class="month-nav-inner">
+      <view
+        class="month-tag {{activeMonth === item.key ? 'active' : ''}}"
+        wx:for="{{months}}" wx:key="key"
+        bindtap="onMonthTap"
+        data-first="{{item.firstDate}}"
+      >{{item.label}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{isEmpty && !loading}}">
+    <view class="empty-timeline">
+      <view class="empty-line"></view>
+      <view class="empty-dot"></view>
+    </view>
+    <text class="empty-text">这片区域还没有时光记忆，去上传第一张吧</text>
+  </view>
+
+  <!-- 时间轴内容区 -->
+  <view class="timeline" wx:if="{{!isEmpty}}">
+    <block wx:for="{{groups}}" wx:key="dateKey" wx:for-index="gi">
+      <view class="tl-group" id="date-{{item.dateId}}">
+
+        <!-- 日期标题行 -->
+        <view class="tl-date-row">
+          <view class="tl-axis-col tl-axis-tap" bindtap="onAxisTap">
+            <view class="tl-line tl-line-top {{gi === 0 ? 'hidden' : ''}}"></view>
+            <view class="tl-dot-date {{item.isToday || activeDate === item.dateKey ? 'active' : ''}}"></view>
+            <view class="tl-line tl-line-bottom"></view>
+          </view>
+          <view class="tl-date-content">
+            <text class="tl-date-text {{item.isToday ? 'today' : ''}}">{{item.dateLabel}}</text>
+            <text class="tl-date-count">({{item.photoCount}}张)</text>
+          </view>
+        </view>
+
+        <!-- 照片卡片列表 -->
+        <view class="tl-card-row" wx:for="{{item.photos}}" wx:for-item="photo" wx:key="id" id="photo-{{photo.id}}">
+          <view class="tl-axis-col tl-axis-tap" bindtap="onAxisTap">
+            <view class="tl-line tl-line-full"></view>
+            <view class="tl-dot-photo {{activePhotoId == photo.id ? 'active' : ''}}"></view>
+          </view>
+          <view class="tl-card-wrap">
+            <view class="tl-connector"></view>
+            <view class="photo-card" bindtap="onPhotoTap" data-id="{{photo.id}}">
+              <image class="card-image" src="{{photo.thumbnailUrl || photo.imageUrl}}" mode="widthFix" lazy-load />
+              <view class="card-info">
+                <view class="card-user">
+                  <image class="card-avatar" src="{{photo.avatarUrl || '/images/icon-user.svg'}}" />
+                  <text class="card-nickname">{{photo.nickname || '匿名用户'}}</text>
+                </view>
+                <view class="card-meta">
+                  <text class="card-location" wx:if="{{photo.locationName}}">{{photo.locationName}}</text>
+                  <text class="card-date">{{photo.photoDate}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+      </view>
+    </block>
+
+    <!-- 轴线终止 -->
+    <view class="tl-end">
+      <view class="tl-axis-col">
+        <view class="tl-line tl-line-top"></view>
+        <view class="tl-dot-end"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-tip" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="loading-tip end" wx:if="{{!hasMore && !isEmpty && !loading}}">
+    <text>没有更多了</text>
+  </view>
+
+  <!-- 时间轴展开面板遮罩 -->
+  <view class="panel-mask {{timelineExpanded ? 'show' : ''}}" bindtap="onPanelMaskTap" catchtouchmove="preventTouchMove"></view>
+
+  <!-- 时间轴展开面板 -->
+  <view class="panel-drawer {{timelineExpanded ? 'show' : ''}}" catchtouchmove="onPanelTouchMove">
+    <!-- 右侧轴线装饰 -->
+    <view class="panel-axis-line"></view>
+    <!-- 顶部渐变 -->
+    <view class="panel-fade-top"></view>
+    <!-- 日期列表 -->
+    <scroll-view
+      class="panel-scroll"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+      scroll-into-view="{{panelScrollTo}}"
+      scroll-with-animation
+    >
+      <view class="panel-list">
+        <block wx:for="{{panelDates}}" wx:key="key">
+          <!-- 月份分隔 -->
+          <view class="panel-month" wx:if="{{item.type === 'month'}}">
+            <view class="panel-month-line"></view>
+            <text class="panel-month-text">{{item.label}}</text>
+            <view class="panel-month-line"></view>
+          </view>
+          <!-- 日期项 -->
+          <view
+            class="panel-date-item {{activeDate === item.dateKey ? 'active' : ''}} {{item.isToday ? 'today' : ''}}"
+            wx:if="{{item.type === 'date'}}"
+            id="{{item.key}}"
+            bindtap="onPanelDateTap"
+            data-date="{{item.dateKey}}"
+          >
+            <view class="panel-dot {{activeDate === item.dateKey ? 'active' : ''}}"></view>
+            <view class="panel-date-info">
+              <text class="panel-date-main">{{item.shortLabel}}</text>
+              <text class="panel-date-sub">{{item.weekDay}}</text>
+            </view>
+            <text class="panel-date-count">{{item.photoCount}}张</text>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+    <!-- 底部渐变 -->
+    <view class="panel-fade-bottom"></view>
+  </view>
+
+</view>

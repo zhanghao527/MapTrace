@@ -28,7 +28,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/**",
                         "/api/photo/nearby",
                         "/api/photo/detail/**",
-                        "/api/photo/batch"
+                        "/api/photo/batch",
+                        "/api/photo/community"
                 );
     }
 }

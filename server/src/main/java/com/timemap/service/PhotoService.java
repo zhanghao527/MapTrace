@@ -21,4 +21,8 @@ public interface PhotoService extends IService<Photo> {
     PhotoDetailResponse getDetail(Long id);
 
     List<PhotoDetailResponse> getBatchDetail(String ids);
+
+
+    com.timemap.model.dto.CommunityPageResponse findCommunity(double lat, double lng, double radiusKm, int page, int size);
+
 }

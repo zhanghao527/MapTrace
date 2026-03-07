@@ -835,7 +835,12 @@ Page({
   },
 
   onCommunityTap() {
-    this._showToast('社区功能即将上线');
+    const lat = this._currentLat || this.data.latitude;
+    const lng = this._currentLng || this.data.longitude;
+    this._skipNextShow = true;
+    wx.navigateTo({
+      url: '/pages/community/community?latitude=' + lat + '&longitude=' + lng
+    });
   },
 
   onProfileTap() {

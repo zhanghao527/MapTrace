@@ -3,7 +3,8 @@
     "pages/map/map",
     "pages/upload/upload",
     "pages/detail/detail",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/community/community"
   ],
   "window": {
     "navigationBarTitleText": "时光地图",
