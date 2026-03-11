@@ -37,15 +37,13 @@ public class ReportServiceImpl implements ReportService {
     private final AdminLogService adminLogService;
     private final CosService cosService;
     private final BusinessMetricsCollector metricsCollector;
+    private final RateLimitService rateLimitService;
+    private final com.timemap.util.BatchQueryHelper batchQueryHelper;
 
     // ==================== 7.1 举报频率限制 ====================
 
     private void checkRateLimit(Long userId) {
-        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-        long recentCount = reportMapper.selectCount(new LambdaQueryWrapper<Report>()
-                .eq(Report::getUserId, userId)
-                .ge(Report::getCreateTime, oneHourAgo));
-        if (recentCount >= RATE_LIMIT_PER_HOUR) {
+        if (!rateLimitService.checkReportLimit(userId)) {
             throw new RuntimeException("举报过于频繁，请稍后再试（每小时最多" + RATE_LIMIT_PER_HOUR + "条）");
         }
     }
@@ -142,8 +140,16 @@ public class ReportServiceImpl implements ReportService {
         }
         reportMapper.selectPage(reportPage, queryWrapper);
 
+        // 批量查询用户信息，避免 N+1 问题
+        Set<Long> userIds = reportPage.getRecords().stream()
+                .map(Report::getUserId)
+                .collect(java.util.stream.Collectors.toSet());
+        Map<Long, User> userMap = batchQueryHelper.batchQueryUsers(userIds);
+
         AdminReportPageResponse response = new AdminReportPageResponse();
-        response.setList(reportPage.getRecords().stream().map(this::toAdminListItem).collect(Collectors.toList()));
+        response.setList(reportPage.getRecords().stream()
+                .map(report -> toAdminListItem(report, userMap))
+                .collect(Collectors.toList()));
         response.setTotal(reportPage.getTotal());
         response.setHasMore((long) page * size < reportPage.getTotal());
         return response;
@@ -397,12 +403,13 @@ public class ReportServiceImpl implements ReportService {
         if (TARGET_TYPE_PHOTO.equals(report.getTargetType())) {
             Photo photo = photoMapper.selectById(report.getTargetId());
             if (photo != null) {
-                // 4.4: COS 文件清理
-                cosService.deleteByUrl(photo.getImageUrl());
+                // 软删除：标记 deleted=1，30天后物理删除 COS 文件
+                cosService.scheduleDelete(photo.getImageUrl(), "photo", photo.getId(), "report_resolved");
                 if (photo.getThumbnailUrl() != null
                         && !photo.getThumbnailUrl().equals(photo.getImageUrl())) {
-                    cosService.deleteByUrl(photo.getThumbnailUrl());
+                    cosService.scheduleDelete(photo.getThumbnailUrl(), "photo", photo.getId(), "report_resolved");
                 }
+                // MyBatis-Plus 的 deleteById 会触发逻辑删除（设置 deleted=1）
                 photoMapper.deleteById(photo.getId());
                 return photo.getUserId();
             }
@@ -413,6 +420,7 @@ public class ReportServiceImpl implements ReportService {
             Comment comment = commentMapper.selectById(report.getTargetId());
             if (comment != null) {
                 Long ownerUserId = comment.getUserId();
+                // commentService.deleteCommentByAdmin 内部也应该是软删除
                 commentService.deleteCommentByAdmin(comment.getId());
                 return ownerUserId;
             }
@@ -423,6 +431,7 @@ public class ReportServiceImpl implements ReportService {
             Message message = messageMapper.selectById(report.getTargetId());
             if (message != null) {
                 Long ownerUserId = message.getFromUserId();
+                // Message 表如果也有 @TableLogic，这里会是软删除
                 messageMapper.deleteById(message.getId());
                 return ownerUserId;
             }
@@ -664,7 +673,7 @@ public class ReportServiceImpl implements ReportService {
         return item;
     }
 
-    private AdminReportListItemResponse toAdminListItem(Report report) {
+    private AdminReportListItemResponse toAdminListItem(Report report, Map<Long, User> userMap) {
         AdminReportListItemResponse item = new AdminReportListItemResponse();
         item.setId(report.getId());
         item.setTargetType(report.getTargetType());
@@ -673,7 +682,8 @@ public class ReportServiceImpl implements ReportService {
         item.setStatus(report.getStatus());
         item.setCreateTime(toTime(report.getCreateTime()));
 
-        User reporter = userMapper.selectById(report.getUserId());
+        // 从 userMap 中获取用户信息，避免 N+1 查询
+        User reporter = userMap.get(report.getUserId());
         if (reporter != null) {
             item.setReporterUserId(reporter.getId());
             item.setReporterNickname(reporter.getNickname());

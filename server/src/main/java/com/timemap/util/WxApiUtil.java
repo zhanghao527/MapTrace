@@ -78,8 +78,8 @@ public class WxApiUtil {
             return response;
         } catch (HttpClientErrorException e) {
             int status = e.getStatusCode().value();
-            String body = e.getResponseBodyAsString();
-            log.warn("微信 getuserphonenumber 返回 {}: {}", status, body != null && !body.isEmpty() ? body : "[no body]");
+            String responseBody = e.getResponseBodyAsString();
+            log.warn("微信 getuserphonenumber 返回 {}: {}", status, responseBody != null && !responseBody.isEmpty() ? responseBody : "[no body]");
             if (status == 412) {
                 throw new RuntimeException("当前无法获取手机号。请确认：1) 小程序已企业认证并开通「手机号快速验证」；2) 在真机上授权（开发工具/模拟器的 code 可能无效）。");
             }

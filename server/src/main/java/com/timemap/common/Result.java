@@ -34,4 +34,18 @@ public class Result<T> {
         result.setMessage(message);
         return result;
     }
+    
+    public static <T> Result<T> fail(ErrorCode errorCode) {
+        Result<T> result = new Result<>();
+        result.setCode(errorCode.getCode());
+        result.setMessage(errorCode.getMessage());
+        return result;
+    }
+    
+    public static <T> Result<T> fail(ErrorCode errorCode, String customMessage) {
+        Result<T> result = new Result<>();
+        result.setCode(errorCode.getCode());
+        result.setMessage(customMessage);
+        return result;
+    }
 }

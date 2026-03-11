@@ -22,7 +22,30 @@ public class CosService {
     private final COSClient cosClient;
     private final CosConfig cosConfig;
     private final BusinessMetricsCollector metricsCollector;
+    private final com.timemap.mapper.CosDeleteRecordMapper cosDeleteRecordMapper;
 
+    /**
+     * 标记文件为待删除（30天后物理删除）
+     * 用于支持申诉后的内容恢复
+     */
+    public void scheduleDelete(String fileUrl, String contentType, Long contentId, String deleteReason) {
+        if (fileUrl == null || fileUrl.isBlank()) return;
+
+        com.timemap.model.entity.CosDeleteRecord record = new com.timemap.model.entity.CosDeleteRecord();
+        record.setFileUrl(fileUrl);
+        record.setContentType(contentType);
+        record.setContentId(contentId);
+        record.setDeleteReason(deleteReason);
+        record.setScheduledDeleteTime(java.time.LocalDateTime.now().plusDays(30));
+        record.setIsDeleted(0);
+
+        cosDeleteRecordMapper.insert(record);
+        log.info("COS 文件已标记为延迟删除: {}, 计划删除时间: {}", fileUrl, record.getScheduledDeleteTime());
+    }
+
+    /**
+     * 立即物理删除文件（仅用于定时任务清理过期文件）
+     */
     public void deleteByUrl(String fileUrl) {
         if (fileUrl == null || fileUrl.isBlank()) return;
         try {
@@ -79,3 +102,4 @@ public class CosService {
         }
     }
 }
+
