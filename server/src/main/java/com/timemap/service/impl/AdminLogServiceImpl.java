@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.timemap.mapper.AdminLogMapper;
 import com.timemap.mapper.UserMapper;
-import com.timemap.model.dto.AdminLogPageResponse;
-import com.timemap.model.dto.AdminLogResponse;
+import com.timemap.model.vo.AdminLogPageVO;
+import com.timemap.model.vo.AdminLogVO;
 import com.timemap.model.entity.AdminLog;
 import com.timemap.model.entity.User;
 import com.timemap.service.AdminLogService;
@@ -33,21 +33,21 @@ public class AdminLogServiceImpl implements AdminLogService {
     }
 
     @Override
-    public AdminLogPageResponse getLogs(Long adminUserId, int page, int size) {
+    public AdminLogPageVO getLogs(Long adminUserId, int page, int size) {
         Page<AdminLog> p = new Page<>(page, size);
         LambdaQueryWrapper<AdminLog> qw = new LambdaQueryWrapper<AdminLog>()
                 .orderByDesc(AdminLog::getCreateTime);
         adminLogMapper.selectPage(p, qw);
 
-        AdminLogPageResponse response = new AdminLogPageResponse();
+        AdminLogPageVO response = new AdminLogPageVO();
         response.setList(p.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
         response.setTotal(p.getTotal());
         response.setHasMore((long) page * size < p.getTotal());
         return response;
     }
 
-    private AdminLogResponse toResponse(AdminLog log) {
-        AdminLogResponse r = new AdminLogResponse();
+    private AdminLogVO toResponse(AdminLog log) {
+        AdminLogVO r = new AdminLogVO();
         r.setId(log.getId());
         r.setAdminUserId(log.getAdminUserId());
         r.setAction(log.getAction());

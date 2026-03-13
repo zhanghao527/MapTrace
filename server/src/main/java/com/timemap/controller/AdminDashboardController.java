@@ -1,7 +1,7 @@
 package com.timemap.controller;
 
 import com.timemap.common.Result;
-import com.timemap.model.dto.DashboardStatsResponse;
+import com.timemap.model.vo.DashboardStatsVO;
 import com.timemap.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,7 @@ public class AdminDashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/stats")
-    public Result<DashboardStatsResponse> stats() {
-        return Result.ok(dashboardService.getStats());
+    public Result<DashboardStatsVO> stats() {
+        return Result.success(dashboardService.getStats());
     }
 }

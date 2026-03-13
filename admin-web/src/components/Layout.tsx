@@ -7,7 +7,7 @@ import {
   CommentOutlined, UserOutlined, LockOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../store/useAuth';
-import { getPendingCount, changePassword } from '../utils/api';
+import { getPendingCount, changePassword } from '../api';
 
 const { Sider, Header, Content } = AntLayout;
 

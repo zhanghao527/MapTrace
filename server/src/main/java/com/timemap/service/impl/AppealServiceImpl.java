@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.timemap.mapper.AppealMapper;
 import com.timemap.mapper.ReportMapper;
 import com.timemap.mapper.UserMapper;
+import com.timemap.mapper.PhotoMapper;
+import com.timemap.mapper.CommentMapper;
+import com.timemap.mapper.CosDeleteRecordMapper;
 import com.timemap.model.dto.*;
-import com.timemap.model.entity.Appeal;
-import com.timemap.model.entity.Report;
-import com.timemap.model.entity.User;
+import com.timemap.model.entity.*;
 import com.timemap.service.AdminAuthService;
 import com.timemap.service.AdminLogService;
 import com.timemap.service.AppealService;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,9 @@ public class AppealServiceImpl implements AppealService {
     private final AppealMapper appealMapper;
     private final ReportMapper reportMapper;
     private final UserMapper userMapper;
+    private final PhotoMapper photoMapper;
+    private final CommentMapper commentMapper;
+    private final CosDeleteRecordMapper cosDeleteRecordMapper;
     private final AdminAuthService adminAuthService;
     private final NotificationService notificationService;
     private final AdminLogService adminLogService;
@@ -83,14 +88,14 @@ public class AppealServiceImpl implements AppealService {
     }
 
     @Override
-    public AppealPageResponse getMyAppeals(Long userId, int page, int size) {
+    public AppealPageVO getMyAppeals(Long userId, int page, int size) {
         Page<Appeal> p = new Page<>(page, size);
         LambdaQueryWrapper<Appeal> qw = new LambdaQueryWrapper<Appeal>()
                 .eq(Appeal::getUserId, userId)
                 .orderByDesc(Appeal::getCreateTime);
         appealMapper.selectPage(p, qw);
 
-        AppealPageResponse response = new AppealPageResponse();
+        AppealPageVO response = new AppealPageVO();
         response.setList(p.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
         response.setTotal(p.getTotal());
         response.setHasMore((long) page * size < p.getTotal());
@@ -98,7 +103,7 @@ public class AppealServiceImpl implements AppealService {
     }
 
     @Override
-    public AppealPageResponse getAdminAppeals(Long adminUserId, Integer status, int page, int size) {
+    public AppealPageVO getAdminAppeals(Long adminUserId, Integer status, int page, int size) {
         adminAuthService.requireAdmin(adminUserId);
 
         Page<Appeal> p = new Page<>(page, size);
@@ -110,7 +115,7 @@ public class AppealServiceImpl implements AppealService {
         }
         appealMapper.selectPage(p, qw);
 
-        AppealPageResponse response = new AppealPageResponse();
+        AppealPageVO response = new AppealPageVO();
         response.setList(p.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
         response.setTotal(p.getTotal());
         response.setHasMore((long) page * size < p.getTotal());
@@ -118,7 +123,7 @@ public class AppealServiceImpl implements AppealService {
     }
 
     @Override
-    public AppealResponse getAppealDetail(Long adminUserId, Long appealId) {
+    public AppealVO getAppealDetail(Long adminUserId, Long appealId) {
         adminAuthService.requireAdmin(adminUserId);
         Appeal appeal = appealMapper.selectById(appealId);
         if (appeal == null) {
@@ -138,6 +143,11 @@ public class AppealServiceImpl implements AppealService {
         appeal.setHandledBy(adminUserId);
         appeal.setHandledTime(LocalDateTime.now());
         appealMapper.updateById(appeal);
+
+        // 如果是内容移除类申诉，尝试恢复被删除的内容
+        if ("content_removed".equals(appeal.getType())) {
+            restoreContent(appeal);
+        }
 
         notificationService.createNotification(appeal.getUserId(), adminUserId,
                 "appeal_result", null, null,
@@ -190,8 +200,50 @@ public class AppealServiceImpl implements AppealService {
         return appeal;
     }
 
-    private AppealResponse toResponse(Appeal appeal) {
-        AppealResponse r = new AppealResponse();
+    /**
+     * 恢复被举报删除的内容（照片或评论）
+     * 仅在 COS 文件尚未被物理删除（30天保留期内）时可恢复
+     */
+    private void restoreContent(Appeal appeal) {
+        Report report = reportMapper.selectById(appeal.getReportId());
+        if (report == null) return;
+
+        String targetType = report.getTargetType();
+        Long targetId = report.getTargetId();
+
+        if ("photo".equals(targetType)) {
+            // 检查 COS 文件是否已被物理删除
+            List<CosDeleteRecord> cosRecords = cosDeleteRecordMapper.selectList(
+                    new LambdaQueryWrapper<CosDeleteRecord>()
+                            .eq(CosDeleteRecord::getContentType, "photo")
+                            .eq(CosDeleteRecord::getContentId, targetId)
+                            .eq(CosDeleteRecord::getIsDeleted, 1));
+            if (!cosRecords.isEmpty()) {
+                throw new RuntimeException("内容已过保留期（COS 文件已清理），无法恢复");
+            }
+
+            // 恢复照片：直接更新 deleted=0（绕过 MyBatis-Plus 逻辑删除过滤）
+            photoMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Photo>()
+                    .eq(Photo::getId, targetId)
+                    .set(Photo::getDeleted, 0));
+
+            // 取消 COS 延迟删除记录
+            cosDeleteRecordMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<CosDeleteRecord>()
+                    .eq(CosDeleteRecord::getContentType, "photo")
+                    .eq(CosDeleteRecord::getContentId, targetId)
+                    .eq(CosDeleteRecord::getIsDeleted, 0)
+                    .set(CosDeleteRecord::getIsDeleted, 2)); // 2 = 已取消
+
+        } else if ("comment".equals(targetType)) {
+            // 恢复评论
+            commentMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Comment>()
+                    .eq(Comment::getId, targetId)
+                    .set(Comment::getDeleted, 0));
+        }
+    }
+
+    private AppealVO toResponse(Appeal appeal) {
+        AppealVO r = new AppealVO();
         r.setId(appeal.getId());
         r.setUserId(appeal.getUserId());
         r.setType(appeal.getType());

@@ -1,12 +1,12 @@
 package com.timemap.service;
 
 import com.timemap.model.dto.LoginRequest;
-import com.timemap.model.dto.LoginResponse;
-import com.timemap.model.dto.BindPhoneResponse;
+import com.timemap.model.vo.LoginVO;
+import com.timemap.model.vo.BindPhoneVO;
 
 public interface AuthService {
 
-    LoginResponse login(LoginRequest request);
+    LoginVO login(LoginRequest request);
 
-    BindPhoneResponse bindPhone(Long userId, String code);
+    BindPhoneVO bindPhone(Long userId, String code);
 }

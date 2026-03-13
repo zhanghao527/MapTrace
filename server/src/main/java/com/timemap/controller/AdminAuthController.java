@@ -15,16 +15,16 @@ public class AdminAuthController {
     private final AdminAccountService adminAccountService;
 
     @PostMapping("/login")
-    public Result<AdminLoginResponse> login(@RequestBody AdminLoginRequest request,
+    public Result<AdminLoginVO> login(@RequestBody AdminLoginRequest request,
                                             HttpServletRequest httpRequest) {
         String ip = getClientIp(httpRequest);
         String ua = httpRequest.getHeader("User-Agent");
-        return Result.ok(adminAccountService.login(request, ip, ua));
+        return Result.success(adminAccountService.login(request, ip, ua));
     }
 
     @GetMapping("/info")
-    public Result<AdminAccountResponse> info(@RequestAttribute("adminAccountId") Long adminId) {
-        return Result.ok(adminAccountService.getInfo(adminId));
+    public Result<AdminAccountVO> info(@RequestAttribute("adminAccountId") Long adminId) {
+        return Result.success(adminAccountService.getInfo(adminId));
     }
 
     @PostMapping("/change-password")
@@ -34,7 +34,7 @@ public class AdminAuthController {
         String ip = getClientIp(httpRequest);
         String ua = httpRequest.getHeader("User-Agent");
         adminAccountService.changePassword(adminId, request, ip, ua);
-        return Result.ok();
+        return Result.success();
     }
 
     private String getClientIp(HttpServletRequest request) {

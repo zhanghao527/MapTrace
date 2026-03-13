@@ -2,7 +2,9 @@ package com.timemap.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.timemap.common.ErrorCode;
 import com.timemap.common.Result;
+import com.timemap.common.ThrowUtils;
 import com.timemap.mapper.*;
 import com.timemap.model.entity.*;
 import com.timemap.service.AdminLogService;
@@ -64,13 +66,13 @@ public class AdminContentController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", list);
         result.put("total", p.getTotal());
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @GetMapping("/photo/{id}")
     public Result<Map<String, Object>> photoDetail(@PathVariable("id") Long id) {
         Photo photo = photoMapper.selectById(id);
-        if (photo == null) throw new RuntimeException("照片不存在");
+        ThrowUtils.throwIf(photo == null, ErrorCode.PHOTO_NOT_FOUND);
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", photo.getId());
         m.put("imageUrl", photo.getImageUrl());
@@ -86,17 +88,17 @@ public class AdminContentController {
         m.put("nickname", u != null ? u.getNickname() : "");
         m.put("avatarUrl", u != null ? u.getAvatarUrl() : "");
         m.put("createTime", photo.getCreateTime());
-        return Result.ok(m);
+        return Result.success(m);
     }
 
     @DeleteMapping("/photo/{id}")
     public Result<Void> deletePhoto(@PathVariable("id") Long id,
                                     @RequestAttribute("adminAccountId") Long adminId) {
         Photo photo = photoMapper.selectById(id);
-        if (photo == null) throw new RuntimeException("照片不存在");
+        ThrowUtils.throwIf(photo == null, ErrorCode.PHOTO_NOT_FOUND);
         photoMapper.deleteById(id);
         adminLogService.log(adminId, "delete_photo", "photo", id, "管理员删除照片");
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/comment/list")
@@ -130,16 +132,16 @@ public class AdminContentController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", list);
         result.put("total", p.getTotal());
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @DeleteMapping("/comment/{id}")
     public Result<Void> deleteComment(@PathVariable("id") Long id,
                                       @RequestAttribute("adminAccountId") Long adminId) {
         Comment comment = commentMapper.selectById(id);
-        if (comment == null) throw new RuntimeException("评论不存在");
+        ThrowUtils.throwIf(comment == null, ErrorCode.COMMENT_NOT_FOUND);
         commentService.deleteCommentByAdmin(id);
         adminLogService.log(adminId, "delete_comment", "comment", id, "管理员删除评论");
-        return Result.ok();
+        return Result.success();
     }
 }

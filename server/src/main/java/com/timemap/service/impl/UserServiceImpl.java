@@ -1,9 +1,11 @@
 package com.timemap.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.timemap.common.BusinessException;
+import com.timemap.common.ErrorCode;
 import com.timemap.mapper.UserMapper;
 import com.timemap.model.dto.UpdateProfileRequest;
-import com.timemap.model.dto.UserInfoResponse;
+import com.timemap.model.vo.UserInfoVO;
 import com.timemap.model.entity.User;
 import com.timemap.service.AdminAuthService;
 import com.timemap.service.CosService;
@@ -11,6 +13,9 @@ import com.timemap.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +25,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final CosService cosService;
 
     @Override
-    public UserInfoResponse updateProfile(Long userId, UpdateProfileRequest request) {
+    public UserInfoVO updateProfile(Long userId, UpdateProfileRequest request) {
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         if (request.getNickname() != null && !request.getNickname().isBlank()) {
@@ -52,19 +57,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserInfoResponse getUserInfo(Long userId) {
+    public UserInfoVO getUserInfo(Long userId) {
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         return buildResponse(user);
     }
 
     @Override
-    public UserInfoResponse uploadAvatar(Long userId, MultipartFile file) {
+    public UserInfoVO uploadAvatar(Long userId, MultipartFile file) {
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         String avatarUrl = cosService.upload(file);
         user.setAvatarUrl(avatarUrl);
@@ -73,8 +78,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return buildResponse(user);
     }
 
-    private UserInfoResponse buildResponse(User user) {
-        UserInfoResponse response = UserInfoResponse.from(user);
+    @Override
+    public void checkBanned(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        if (user.getIsBanned() != null && user.getIsBanned() == 1) {
+            throw new BusinessException(ErrorCode.USER_BANNED, "账号已被封禁，无法执行此操作");
+        }
+    }
+
+    @Override
+    public void checkMuted(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        if (user.getIsBanned() != null && user.getIsBanned() == 1) {
+            throw new BusinessException(ErrorCode.USER_BANNED, "账号已被封禁，无法执行此操作");
+        }
+        if (user.getMuteUntil() != null && user.getMuteUntil().isAfter(LocalDateTime.now())) {
+            long days = Duration.between(LocalDateTime.now(), user.getMuteUntil()).toDays() + 1;
+            throw new BusinessException(ErrorCode.USER_MUTED, "你已被禁言，剩余 " + days + " 天，期间无法评论和发送私信");
+        }
+    }
+
+    @Override
+    public void checkBanUpload(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        if (user.getIsBanned() != null && user.getIsBanned() == 1) {
+            throw new BusinessException(ErrorCode.USER_BANNED, "账号已被封禁，无法执行此操作");
+        }
+        if (user.getBanUploadUntil() != null && user.getBanUploadUntil().isAfter(LocalDateTime.now())) {
+            long days = Duration.between(LocalDateTime.now(), user.getBanUploadUntil()).toDays() + 1;
+            throw new BusinessException(ErrorCode.USER_UPLOAD_BANNED, "你已被禁止上传照片，剩余 " + days + " 天");
+        }
+    }
+
+    private UserInfoVO buildResponse(User user) {
+        UserInfoVO response = UserInfoVO.from(user);
         response.setIsAdmin(adminAuthService.isAdmin(user.getId()));
         return response;
     }

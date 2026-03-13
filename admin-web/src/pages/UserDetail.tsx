@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, Descriptions, Tabs, Table, Image, Tag, Button, Space, Modal, Select, InputNumber, message, Spin, Avatar } from 'antd';
-import { getUserDetail, getUserPhotos, getUserComments, getUserViolations, punishUser, unpunishUser, deletePhoto, deleteComment } from '../utils/api';
+import { getUserDetail, getUserPhotos, getUserComments, getUserViolations, punishUser, unpunishUser, deletePhoto, deleteComment } from '../api';
 
 export default function UserDetail() {
   const { id } = useParams();
@@ -27,7 +27,7 @@ export default function UserDetail() {
       title: '确认处罚',
       content: `对用户 ${u.nickname} 执行 ${punishType}`,
       onOk: async () => {
-        await punishUser({ userId: id, punishmentType: punishType, punishmentDays: punishDays, reason: '管理员手动处罚' });
+        await punishUser({ userId: id!, punishmentType: punishType, punishmentDays: punishDays, reason: '管理员手动处罚' });
         message.success('处罚成功');
         qc.invalidateQueries({ queryKey: ['user', id] });
       },
@@ -38,7 +38,7 @@ export default function UserDetail() {
     Modal.confirm({
       title: '确认解除处罚',
       onOk: async () => {
-        await unpunishUser({ userId: id, type });
+        await unpunishUser({ userId: id!, type });
         message.success('已解除');
         qc.invalidateQueries({ queryKey: ['user', id] });
       },

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, Tag, Select, Space, Modal, Input, message, Button } from 'antd';
-import { getAppeals, resolveAppeal, rejectAppeal } from '../utils/api';
+import { getAppeals, resolveAppeal, rejectAppeal } from '../api';
 
 const statusMap: Record<number, { text: string; color: string }> = {
   0: { text: '待处理', color: 'orange' }, 1: { text: '已采纳', color: 'green' }, 2: { text: '已驳回', color: 'red' },

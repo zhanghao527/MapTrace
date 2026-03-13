@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, Input, Button, Modal, message, Avatar, Space } from 'antd';
-import { getComments, deleteComment } from '../utils/api';
+import { getComments, deleteComment } from '../api';
 
 export default function Comments() {
   const qc = useQueryClient();

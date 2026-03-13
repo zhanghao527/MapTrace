@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, Checkbox, message, Modal } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { login, changePassword } from '../utils/api';
+import { login, changePassword } from '../api';
 import { useAuth } from '../store/useAuth';
 
 export default function Login() {

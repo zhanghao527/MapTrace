@@ -5,9 +5,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.timemap.mapper.PhotoLikeMapper;
 import com.timemap.mapper.PhotoMapper;
 import com.timemap.mapper.UserMapper;
-import com.timemap.model.dto.NearbyPhotoResponse;
-import com.timemap.model.dto.PhotoDetailResponse;
-import com.timemap.model.dto.UserProfileResponse;
+import com.timemap.model.vo.NearbyPhotoVO;
+import com.timemap.model.vo.PhotoDetailVO;
+import com.timemap.model.vo.UserProfileVO;
 import com.timemap.model.entity.Photo;
 import com.timemap.model.entity.PhotoLike;
 import com.timemap.model.entity.User;
@@ -39,7 +39,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     private final BusinessMetricsCollector metricsCollector;
 
     @Override
-    public PhotoDetailResponse upload(MultipartFile file, Long userId,
+    public PhotoDetailVO upload(MultipartFile file, Long userId,
                                       Double longitude, Double latitude,
                                       String locationName, String photoDate,
                                       String description, String district) {
@@ -74,23 +74,23 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     }
 
     @Override
-    public List<NearbyPhotoResponse> findNearby(double lat, double lng, double radiusKm,
+    public List<NearbyPhotoVO> findNearby(double lat, double lng, double radiusKm,
                                                  String startDate, String endDate) {
         return photoMapper.findNearby(lat, lng, radiusKm, startDate, endDate);
     }
 
     @Override
-    public PhotoDetailResponse getDetail(Long id) {
+    public PhotoDetailVO getDetail(Long id) {
         return getDetail(id, null);
     }
 
     @Override
-    public PhotoDetailResponse getDetail(Long id, Long userId) {
+    public PhotoDetailVO getDetail(Long id, Long userId) {
         log.info("getDetail 调用: photoId={}, userId={}", id, userId);
         Photo photo = this.getById(id);
         if (photo == null) return null;
 
-        PhotoDetailResponse resp = new PhotoDetailResponse();
+        PhotoDetailVO resp = new PhotoDetailVO();
         resp.setId(photo.getId());
         resp.setUserId(photo.getUserId());
         resp.setImageUrl(photo.getImageUrl());
@@ -169,7 +169,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     }
 
     @Override
-    public List<PhotoDetailResponse> getBatchDetail(String ids, Long userId) {
+    public List<PhotoDetailVO> getBatchDetail(String ids, Long userId) {
         return Arrays.stream(ids.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -184,13 +184,13 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     }
 
     @Override
-    public com.timemap.model.dto.CommunityPageResponse findCommunity(String district, int page, int size, String sortBy) {
+    public com.timemap.model.vo.CommunityPageVO findCommunity(String district, int page, int size, String sortBy) {
         if (sortBy == null || sortBy.isEmpty()) sortBy = "photoDate";
         if (district == null) district = "";
         int offset = (page - 1) * size;
         var list = photoMapper.findCommunity(offset, size, sortBy, district);
         long total = photoMapper.countCommunity(district);
-        var resp = new com.timemap.model.dto.CommunityPageResponse();
+        var resp = new com.timemap.model.vo.CommunityPageVO();
         resp.setList(list);
         resp.setTotal(total);
         resp.setHasMore(offset + size < total);
@@ -248,10 +248,10 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     }
 
     @Override
-    public UserProfileResponse getUserProfile(Long userId) {
+    public UserProfileVO getUserProfile(Long userId) {
         User user = userMapper.selectById(userId);
         if (user == null) return null;
-        UserProfileResponse resp = new UserProfileResponse();
+        UserProfileVO resp = new UserProfileVO();
         resp.setUserId(user.getId());
         resp.setNickname(user.getNickname());
         resp.setAvatarUrl(user.getAvatarUrl());

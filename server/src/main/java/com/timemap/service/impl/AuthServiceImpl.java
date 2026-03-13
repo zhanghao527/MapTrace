@@ -1,10 +1,12 @@
 package com.timemap.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.timemap.common.BusinessException;
+import com.timemap.common.ErrorCode;
 import com.timemap.mapper.UserMapper;
-import com.timemap.model.dto.BindPhoneResponse;
+import com.timemap.model.vo.BindPhoneVO;
 import com.timemap.model.dto.LoginRequest;
-import com.timemap.model.dto.LoginResponse;
+import com.timemap.model.vo.LoginVO;
 import com.timemap.model.dto.WxPhoneNumberResponse;
 import com.timemap.model.dto.WxSessionResponse;
 import com.timemap.model.entity.User;
@@ -25,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     private final BusinessMetricsCollector metricsCollector;
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public LoginVO login(LoginRequest request) {
         // 1. 调用微信接口获取 openid
         WxSessionResponse wxResp = wxApiUtil.code2Session(request.getCode());
         String openid = wxResp.getOpenid();
@@ -58,14 +60,14 @@ public class AuthServiceImpl implements AuthService {
         // 监控埋点
         metricsCollector.recordWechatLogin("success", isNew);
 
-        return LoginResponse.of(token, user.getId(), isNew, isPhoneMissing(user), !isProfileComplete(user));
+        return LoginVO.of(token, user.getId(), isNew, isPhoneMissing(user), !isProfileComplete(user));
     }
 
     @Override
-    public BindPhoneResponse bindPhone(Long userId, String code) {
+    public BindPhoneVO bindPhone(Long userId, String code) {
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         WxPhoneNumberResponse response = wxApiUtil.getPhoneNumber(code);
@@ -75,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         user.setProfileCompleted(isProfileComplete(user) ? 1 : 0);
         userMapper.updateById(user);
 
-        return new BindPhoneResponse(maskPhone(user.getPhone()));
+        return new BindPhoneVO(maskPhone(user.getPhone()));
     }
 
     private void mergeProfile(User user, LoginRequest request) {

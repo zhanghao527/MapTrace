@@ -60,7 +60,11 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/photo/stats",
                         "/api/photo/user/**",
                         "/api/comment/list",
-                        "/api/comment/replies"
+                        "/api/comment/replies",
+                        "/doc.html",
+                        "/webjars/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**"
                 )
                 .order(2);
     }

@@ -2,50 +2,42 @@ package com.timemap.common;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
+/**
+ * 统一返回体，对齐模版规范：{ code, data, message }
+ * 成功码为 0（非 200），错误码使用 ErrorCode 枚举
+ */
 @Data
-public class Result<T> {
+public class Result<T> implements Serializable {
 
     private int code;
-    private String message;
     private T data;
+    private String message;
 
-    public static <T> Result<T> ok(T data) {
-        Result<T> result = new Result<>();
-        result.setCode(200);
-        result.setMessage("success");
-        result.setData(data);
-        return result;
-    }
-
-    public static <T> Result<T> ok() {
-        return ok(null);
+    private Result(int code, T data, String message) {
+        this.code = code;
+        this.data = data;
+        this.message = message;
     }
 
-    public static <T> Result<T> fail(String message) {
-        Result<T> result = new Result<>();
-        result.setCode(500);
-        result.setMessage(message);
-        return result;
+    public static <T> Result<T> success(T data) {
+        return new Result<>(ErrorCode.SUCCESS.getCode(), data, ErrorCode.SUCCESS.getMessage());
     }
 
-    public static <T> Result<T> fail(int code, String message) {
-        Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMessage(message);
-        return result;
+    public static <T> Result<T> success() {
+        return success(null);
     }
-    
-    public static <T> Result<T> fail(ErrorCode errorCode) {
-        Result<T> result = new Result<>();
-        result.setCode(errorCode.getCode());
-        result.setMessage(errorCode.getMessage());
-        return result;
+
+    public static <T> Result<T> error(ErrorCode errorCode) {
+        return new Result<>(errorCode.getCode(), null, errorCode.getMessage());
     }
-    
-    public static <T> Result<T> fail(ErrorCode errorCode, String customMessage) {
-        Result<T> result = new Result<>();
-        result.setCode(errorCode.getCode());
-        result.setMessage(customMessage);
-        return result;
+
+    public static <T> Result<T> error(int code, String message) {
+        return new Result<>(code, null, message);
+    }
+
+    public static <T> Result<T> error(ErrorCode errorCode, String message) {
+        return new Result<>(errorCode.getCode(), null, message);
     }
 }

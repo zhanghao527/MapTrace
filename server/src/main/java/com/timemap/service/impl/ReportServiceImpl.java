@@ -63,7 +63,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional
-    public ReportSubmitResponse submitReport(String targetType, Long targetId, String reason, String description, Long userId) {
+    public ReportSubmitVO submitReport(String targetType, Long targetId, String reason, String description, Long userId) {
         if (targetId == null) {
             throw new RuntimeException("举报对象不能为空");
         }
@@ -101,7 +101,7 @@ public class ReportServiceImpl implements ReportService {
         // 监控埋点
         metricsCollector.recordReport(reason.trim(), targetInfo.targetType);
 
-        ReportSubmitResponse response = new ReportSubmitResponse();
+        ReportSubmitVO response = new ReportSubmitVO();
         response.setReportId(report.getId());
         response.setStatus(report.getStatus());
         return response;
@@ -110,14 +110,14 @@ public class ReportServiceImpl implements ReportService {
     // ==================== 2.3 举报列表含缩略图 ====================
 
     @Override
-    public MyReportPageResponse getMyReports(Long userId, int page, int size) {
+    public MyReportPageVO getMyReports(Long userId, int page, int size) {
         Page<Report> reportPage = new Page<>(page, size);
         LambdaQueryWrapper<Report> queryWrapper = new LambdaQueryWrapper<Report>()
                 .eq(Report::getUserId, userId)
                 .orderByDesc(Report::getCreateTime);
         reportMapper.selectPage(reportPage, queryWrapper);
 
-        MyReportPageResponse response = new MyReportPageResponse();
+        MyReportPageVO response = new MyReportPageVO();
         response.setList(reportPage.getRecords().stream().map(this::toMyReportItem).collect(Collectors.toList()));
         response.setTotal(reportPage.getTotal());
         response.setHasMore((long) page * size < reportPage.getTotal());
@@ -125,7 +125,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public AdminReportPageResponse getAdminReports(Long adminUserId, Integer status, String targetType, int page, int size) {
+    public AdminReportPageVO getAdminReports(Long adminUserId, Integer status, String targetType, int page, int size) {
         adminAuthService.requireAdmin(adminUserId);
 
         Page<Report> reportPage = new Page<>(page, size);
@@ -146,7 +146,7 @@ public class ReportServiceImpl implements ReportService {
                 .collect(java.util.stream.Collectors.toSet());
         Map<Long, User> userMap = batchQueryHelper.batchQueryUsers(userIds);
 
-        AdminReportPageResponse response = new AdminReportPageResponse();
+        AdminReportPageVO response = new AdminReportPageVO();
         response.setList(reportPage.getRecords().stream()
                 .map(report -> toAdminListItem(report, userMap))
                 .collect(Collectors.toList()));
@@ -156,7 +156,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public AdminReportDetailResponse getAdminReportDetail(Long adminUserId, Long reportId) {
+    public AdminReportDetailVO getAdminReportDetail(Long adminUserId, Long reportId) {
         adminAuthService.requireAdmin(adminUserId);
         Report report = getReport(reportId);
         return toAdminDetail(report);
@@ -301,9 +301,9 @@ public class ReportServiceImpl implements ReportService {
     // ==================== 3.9 待处理数量 ====================
 
     @Override
-    public PendingReportCountResponse getPendingCount(Long adminUserId) {
+    public PendingReportCountVO getPendingCount(Long adminUserId) {
         adminAuthService.requireAdmin(adminUserId);
-        PendingReportCountResponse r = new PendingReportCountResponse();
+        PendingReportCountVO r = new PendingReportCountVO();
         r.setReportCount(reportMapper.selectCount(
                 new LambdaQueryWrapper<Report>().eq(Report::getStatus, 0)));
         return r;
@@ -312,7 +312,7 @@ public class ReportServiceImpl implements ReportService {
     // ==================== 3.8 举报聚合 ====================
 
     @Override
-    public List<AggregatedReportResponse> getAggregatedReports(Long adminUserId, int page, int size) {
+    public List<AggregatedReportVO> getAggregatedReports(Long adminUserId, int page, int size) {
         adminAuthService.requireAdmin(adminUserId);
 
         List<Report> pendingReports = reportMapper.selectList(
@@ -326,12 +326,12 @@ public class ReportServiceImpl implements ReportService {
                         LinkedHashMap::new,
                         Collectors.toList()));
 
-        List<AggregatedReportResponse> result = new ArrayList<>();
+        List<AggregatedReportVO> result = new ArrayList<>();
         for (Map.Entry<String, List<Report>> entry : grouped.entrySet()) {
             List<Report> reports = entry.getValue();
             Report first = reports.get(0);
 
-            AggregatedReportResponse agg = new AggregatedReportResponse();
+            AggregatedReportVO agg = new AggregatedReportVO();
             agg.setTargetType(first.getTargetType());
             agg.setTargetId(first.getTargetId());
             agg.setReportCount(reports.size());
@@ -387,13 +387,13 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public UserViolationPageResponse getUserViolations(Long adminUserId, Long userId, int page, int size) {
+    public UserViolationPageVO getUserViolations(Long adminUserId, Long userId, int page, int size) {
         adminAuthService.requireAdmin(adminUserId);
         return queryViolations(userId, page, size);
     }
 
     @Override
-    public UserViolationPageResponse getMyViolations(Long userId, int page, int size) {
+    public UserViolationPageVO getMyViolations(Long userId, int page, int size) {
         return queryViolations(userId, page, size);
     }
 
@@ -561,22 +561,22 @@ public class ReportServiceImpl implements ReportService {
         metricsCollector.recordPunishment(punishmentType);
     }
 
-    private UserViolationPageResponse queryViolations(Long userId, int page, int size) {
+    private UserViolationPageVO queryViolations(Long userId, int page, int size) {
         Page<UserViolation> p = new Page<>(page, size);
         LambdaQueryWrapper<UserViolation> qw = new LambdaQueryWrapper<UserViolation>()
                 .eq(UserViolation::getUserId, userId)
                 .orderByDesc(UserViolation::getCreateTime);
         userViolationMapper.selectPage(p, qw);
 
-        UserViolationPageResponse resp = new UserViolationPageResponse();
+        UserViolationPageVO resp = new UserViolationPageVO();
         resp.setList(p.getRecords().stream().map(this::toViolationResponse).collect(Collectors.toList()));
         resp.setTotal(p.getTotal());
         resp.setHasMore((long) page * size < p.getTotal());
         return resp;
     }
 
-    private UserViolationResponse toViolationResponse(UserViolation v) {
-        UserViolationResponse r = new UserViolationResponse();
+    private UserViolationVO toViolationResponse(UserViolation v) {
+        UserViolationVO r = new UserViolationVO();
         r.setId(v.getId());
         r.setUserId(v.getUserId());
         r.setReportId(v.getReportId());
@@ -651,8 +651,8 @@ public class ReportServiceImpl implements ReportService {
         throw new RuntimeException("不支持的举报对象类型");
     }
 
-    private MyReportItemResponse toMyReportItem(Report report) {
-        MyReportItemResponse item = new MyReportItemResponse();
+    private MyReportItemVO toMyReportItem(Report report) {
+        MyReportItemVO item = new MyReportItemVO();
         item.setId(report.getId());
         item.setTargetType(report.getTargetType());
         item.setTargetId(report.getTargetId());
@@ -673,8 +673,8 @@ public class ReportServiceImpl implements ReportService {
         return item;
     }
 
-    private AdminReportListItemResponse toAdminListItem(Report report, Map<Long, User> userMap) {
-        AdminReportListItemResponse item = new AdminReportListItemResponse();
+    private AdminReportListItemVO toAdminListItem(Report report, Map<Long, User> userMap) {
+        AdminReportListItemVO item = new AdminReportListItemVO();
         item.setId(report.getId());
         item.setTargetType(report.getTargetType());
         item.setTargetId(report.getTargetId());
@@ -700,8 +700,8 @@ public class ReportServiceImpl implements ReportService {
         return item;
     }
 
-    private AdminReportDetailResponse toAdminDetail(Report report) {
-        AdminReportDetailResponse response = new AdminReportDetailResponse();
+    private AdminReportDetailVO toAdminDetail(Report report) {
+        AdminReportDetailVO response = new AdminReportDetailVO();
         response.setId(report.getId());
         response.setTargetType(report.getTargetType());
         response.setTargetId(report.getTargetId());

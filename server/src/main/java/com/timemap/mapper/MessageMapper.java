@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
-import com.timemap.model.dto.ConversationResponse;
+import com.timemap.model.vo.ConversationVO;
 import java.util.List;
 
 @Mapper
@@ -40,7 +40,7 @@ public interface MessageMapper extends BaseMapper<Message> {
         ORDER BY m.create_time DESC
         </script>
     """)
-    List<ConversationResponse> findConversations(@Param("userId") Long userId);
+    List<ConversationVO> findConversations(@Param("userId") Long userId);
 
     /**
      * 将某个用户发给我的所有消息标记为已读

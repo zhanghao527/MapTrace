@@ -1,4 +1,5 @@
 const { request, checkLogin } = require('../../utils/request');
+const { requestSubscribe } = require('../../utils/subscribe');
 const app = getApp();
 
 const REPORT_REASONS = ['色情低俗', '违法违规', '侵权', '虚假信息', '人身攻击', '其他'];
@@ -212,6 +213,8 @@ Page({
         });
         this.setData({ comments });
       }
+      // 评论成功后请求订阅授权，下次有人回复时可推送
+      requestSubscribe('interaction');
     }).catch(() => {
       if (body.parentId === 0) {
         const comments = this.data.comments.filter(c => c.id !== optimistic.id);
@@ -369,7 +372,11 @@ Page({
     }
 
     request(url, 'POST')
-      .then(() => { wx.showToast({ title: '举报已提交', icon: 'success' }); })
+      .then(() => {
+        wx.showToast({ title: '举报已提交', icon: 'success' });
+        // 举报成功后请求订阅授权，处理结果可推送
+        requestSubscribe('report');
+      })
       .catch((err) => { wx.showToast({ title: (err && err.message) || '举报失败', icon: 'none' }); });
   },
 

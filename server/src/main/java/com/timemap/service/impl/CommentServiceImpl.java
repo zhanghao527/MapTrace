@@ -6,8 +6,8 @@ import com.timemap.mapper.CommentLikeMapper;
 import com.timemap.mapper.CommentMapper;
 import com.timemap.mapper.UserMapper;
 import com.timemap.model.dto.AddCommentRequest;
-import com.timemap.model.dto.CommentPageResponse;
-import com.timemap.model.dto.CommentResponse;
+import com.timemap.model.vo.CommentPageVO;
+import com.timemap.model.vo.CommentVO;
 import com.timemap.model.entity.Comment;
 import com.timemap.model.entity.CommentLike;
 import com.timemap.model.entity.User;
@@ -34,7 +34,7 @@ public class CommentServiceImpl implements CommentService {
     private final BusinessMetricsCollector metricsCollector;
 
     @Override
-    public CommentPageResponse getComments(Long photoId, int page, int size, Long currentUserId) {
+    public CommentPageVO getComments(Long photoId, int page, int size, Long currentUserId) {
         // 查询顶级评论
         Page<Comment> p = new Page<>(page, size);
         LambdaQueryWrapper<Comment> qw = new LambdaQueryWrapper<Comment>()
@@ -47,11 +47,11 @@ public class CommentServiceImpl implements CommentService {
                 .eq(Comment::getPhotoId, photoId)
                 .eq(Comment::getParentId, 0L));
 
-        List<CommentResponse> list = p.getRecords().stream()
+        List<CommentVO> list = p.getRecords().stream()
                 .map(c -> toResponse(c, currentUserId))
                 .collect(Collectors.toList());
 
-        CommentPageResponse resp = new CommentPageResponse();
+        CommentPageVO resp = new CommentPageVO();
         resp.setList(list);
         resp.setTotal(total);
         resp.setHasMore((long) page * size < total);
@@ -59,18 +59,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentPageResponse getReplies(Long commentId, int page, int size, Long currentUserId) {
+    public CommentPageVO getReplies(Long commentId, int page, int size, Long currentUserId) {
         Page<Comment> p = new Page<>(page, size);
         LambdaQueryWrapper<Comment> qw = new LambdaQueryWrapper<Comment>()
                 .eq(Comment::getParentId, commentId)
                 .orderByAsc(Comment::getCreateTime);
         commentMapper.selectPage(p, qw);
 
-        List<CommentResponse> list = p.getRecords().stream()
+        List<CommentVO> list = p.getRecords().stream()
                 .map(c -> toResponse(c, currentUserId))
                 .collect(Collectors.toList());
 
-        CommentPageResponse resp = new CommentPageResponse();
+        CommentPageVO resp = new CommentPageVO();
         resp.setList(list);
         resp.setTotal(p.getTotal());
         resp.setHasMore((long) page * size < p.getTotal());
@@ -79,7 +79,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse addComment(AddCommentRequest req, Long userId) {
+    public CommentVO addComment(AddCommentRequest req, Long userId) {
         Comment comment = new Comment();
         comment.setPhotoId(req.getPhotoId());
         comment.setUserId(userId);
@@ -202,8 +202,8 @@ public class CommentServiceImpl implements CommentService {
         return result;
     }
 
-    private CommentResponse toResponse(Comment c, Long currentUserId) {
-        CommentResponse r = new CommentResponse();
+    private CommentVO toResponse(Comment c, Long currentUserId) {
+        CommentVO r = new CommentVO();
         r.setId(c.getId());
         r.setUserId(c.getUserId());
         r.setContent(c.getContent());

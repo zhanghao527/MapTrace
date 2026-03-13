@@ -33,7 +33,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
     @Override
     public void requireAdmin(Long userId) {
         if (!isAdmin(userId)) {
-            throw new RuntimeException("无管理员权限");
+            throw new com.timemap.common.BusinessException(com.timemap.common.ErrorCode.NO_AUTH_ERROR, "无管理员权限");
         }
     }
 

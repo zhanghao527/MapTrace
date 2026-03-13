@@ -2,7 +2,7 @@ package com.timemap.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.timemap.mapper.*;
-import com.timemap.model.dto.DashboardStatsResponse;
+import com.timemap.model.vo.DashboardStatsVO;
 import com.timemap.model.entity.*;
 import com.timemap.service.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -25,24 +25,24 @@ public class DashboardServiceImpl implements DashboardService {
     private final PhotoMapper photoMapper;
 
     // Simple in-memory cache
-    private DashboardStatsResponse cachedStats;
+    private DashboardStatsVO cachedStats;
     private long cacheTimestamp = 0;
     private static final long CACHE_TTL = 10 * 60 * 1000L; // 10 minutes
 
     @Override
-    public DashboardStatsResponse getStats() {
+    public DashboardStatsVO getStats() {
         long now = System.currentTimeMillis();
         if (cachedStats != null && (now - cacheTimestamp) < CACHE_TTL) {
             return cachedStats;
         }
-        DashboardStatsResponse stats = buildStats();
+        DashboardStatsVO stats = buildStats();
         cachedStats = stats;
         cacheTimestamp = now;
         return stats;
     }
 
-    private DashboardStatsResponse buildStats() {
-        DashboardStatsResponse s = new DashboardStatsResponse();
+    private DashboardStatsVO buildStats() {
+        DashboardStatsVO s = new DashboardStatsVO();
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         LocalDateTime thirtyDaysAgo = LocalDate.now().minusDays(30).atStartOfDay();
 
@@ -69,7 +69,7 @@ public class DashboardServiceImpl implements DashboardService {
         Map<String, Long> reasonMap = recentReports.stream()
                 .collect(Collectors.groupingBy(r -> r.getReason() != null ? r.getReason() : "未知", Collectors.counting()));
         s.setReasonDistribution(reasonMap.entrySet().stream().map(e -> {
-            DashboardStatsResponse.DistributionItem item = new DashboardStatsResponse.DistributionItem();
+            DashboardStatsVO.DistributionItem item = new DashboardStatsVO.DistributionItem();
             item.setName(e.getKey());
             item.setValue(e.getValue());
             return item;
@@ -110,14 +110,14 @@ public class DashboardServiceImpl implements DashboardService {
         return s;
     }
 
-    private List<DashboardStatsResponse.TrendItem> buildDailyTrend(List<LocalDate> dates, int days) {
+    private List<DashboardStatsVO.TrendItem> buildDailyTrend(List<LocalDate> dates, int days) {
         Map<LocalDate, Long> countMap = dates.stream()
                 .collect(Collectors.groupingBy(d -> d, Collectors.counting()));
-        List<DashboardStatsResponse.TrendItem> trend = new ArrayList<>();
+        List<DashboardStatsVO.TrendItem> trend = new ArrayList<>();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM-dd");
         for (int i = days - 1; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
-            DashboardStatsResponse.TrendItem item = new DashboardStatsResponse.TrendItem();
+            DashboardStatsVO.TrendItem item = new DashboardStatsVO.TrendItem();
             item.setDate(date.format(fmt));
             item.setCount(countMap.getOrDefault(date, 0L));
             trend.add(item);

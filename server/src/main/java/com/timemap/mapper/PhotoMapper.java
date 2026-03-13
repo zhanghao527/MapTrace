@@ -1,10 +1,10 @@
 package com.timemap.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.timemap.model.dto.CommunityPhotoResponse;
-import com.timemap.model.dto.MyPhotoResponse;
-import com.timemap.model.dto.NearbyPhotoResponse;
-import com.timemap.model.dto.UserAreaStatResponse;
+import com.timemap.model.vo.CommunityPhotoVO;
+import com.timemap.model.vo.MyPhotoVO;
+import com.timemap.model.vo.NearbyPhotoVO;
+import com.timemap.model.vo.UserAreaStatVO;
 import com.timemap.model.entity.Photo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -41,7 +41,7 @@ public interface PhotoMapper extends BaseMapper<Photo> {
         LIMIT 200
         </script>
     """)
-    List<NearbyPhotoResponse> findNearby(@Param("lat") double lat,
+    List<NearbyPhotoVO> findNearby(@Param("lat") double lat,
                                           @Param("lng") double lng,
                                           @Param("radiusKm") double radiusKm,
                                           @Param("startDate") String startDate,
@@ -72,7 +72,7 @@ public interface PhotoMapper extends BaseMapper<Photo> {
         LIMIT #{offset}, #{size}
         </script>
     """)
-    List<CommunityPhotoResponse> findCommunity(@Param("offset") int offset,
+    List<CommunityPhotoVO> findCommunity(@Param("offset") int offset,
                                                 @Param("size") int size,
                                                 @Param("sortBy") String sortBy,
                                                 @Param("district") String district);
@@ -165,7 +165,7 @@ public interface PhotoMapper extends BaseMapper<Photo> {
         ORDER BY p.create_time DESC
         LIMIT #{offset}, #{size}
     """)
-    List<MyPhotoResponse> findMyPhotos(@Param("userId") Long userId,
+    List<MyPhotoVO> findMyPhotos(@Param("userId") Long userId,
                                        @Param("offset") int offset,
                                        @Param("size") int size);
 
@@ -204,7 +204,7 @@ public interface PhotoMapper extends BaseMapper<Photo> {
         ORDER BY count DESC, name ASC
         LIMIT #{limit}
     """)
-    List<UserAreaStatResponse> findTopAreas(@Param("userId") Long userId,
+    List<UserAreaStatVO> findTopAreas(@Param("userId") Long userId,
                                             @Param("limit") int limit);
 
     @Select("""

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, Tag, Button, Modal, Form, Input, Select, Space, message } from 'antd';
-import { getAdminAccounts, createAdminAccount, updateAdminAccount, resetAdminPassword, toggleAdminAccount } from '../utils/api';
+import { getAdminAccounts, createAdminAccount, updateAdminAccount, resetAdminPassword, toggleAdminAccount } from '../api';
 
 export default function Admins() {
   const qc = useQueryClient();

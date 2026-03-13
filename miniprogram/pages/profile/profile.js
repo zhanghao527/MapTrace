@@ -241,7 +241,7 @@ Page({
 
     const isLocal = !/^https?:\/\//.test(avatarPreview);
     const avatarTask = isLocal
-      ? uploadFile('/user/avatar', avatarPreview).then(r => (r.data && r.data.avatarUrl) || avatarPreview)
+      ? this._uploadAvatarWithRetry(avatarPreview, 2)
       : Promise.resolve(avatarPreview);
 
     avatarTask
@@ -262,9 +262,26 @@ Page({
         this.loadUnreadCount();
       })
       .catch(err => {
-        wx.showToast({ title: (err && err.message) || '保存失败', icon: 'none' });
+        wx.showToast({ title: (err && err.message) || '保存失败，请重试', icon: 'none' });
       })
       .finally(() => this.setData({ savingProfile: false }));
+  },
+
+  /**
+   * 带重试的头像上传
+   * @param {string} filePath 本地临时文件路径
+   * @param {number} retries 剩余重试次数
+   */
+  _uploadAvatarWithRetry(filePath, retries) {
+    return uploadFile('/user/avatar', filePath)
+      .then(r => (r.data && r.data.avatarUrl) || filePath)
+      .catch(err => {
+        if (retries > 0) {
+          return new Promise(resolve => setTimeout(resolve, 1000))
+            .then(() => this._uploadAvatarWithRetry(filePath, retries - 1));
+        }
+        throw err;
+      });
   },
 
   onChooseAvatar(e) {

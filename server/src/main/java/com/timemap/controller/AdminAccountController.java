@@ -18,16 +18,16 @@ public class AdminAccountController {
     private final AdminLogService adminLogService;
 
     @GetMapping("/list")
-    public Result<List<AdminAccountResponse>> list(@RequestAttribute("adminAccountId") Long adminId) {
-        return Result.ok(adminAccountService.listAccounts(adminId));
+    public Result<List<AdminAccountVO>> list(@RequestAttribute("adminAccountId") Long adminId) {
+        return Result.success(adminAccountService.listAccounts(adminId));
     }
 
     @PostMapping("/create")
-    public Result<AdminAccountResponse> create(@RequestAttribute("adminAccountId") Long adminId,
+    public Result<AdminAccountVO> create(@RequestAttribute("adminAccountId") Long adminId,
                                                @RequestBody CreateAdminAccountRequest request) {
-        AdminAccountResponse resp = adminAccountService.createAccount(adminId, request);
+        AdminAccountVO resp = adminAccountService.createAccount(adminId, request);
         adminLogService.log(adminId, "create_admin", "admin_account", resp.getId(), "创建管理员: " + request.getUsername());
-        return Result.ok(resp);
+        return Result.success(resp);
     }
 
     @PutMapping("/{id}")
@@ -36,7 +36,7 @@ public class AdminAccountController {
                                @RequestBody CreateAdminAccountRequest request) {
         adminAccountService.updateAccount(adminId, targetId, request);
         adminLogService.log(adminId, "update_admin", "admin_account", targetId, "更新管理员信息");
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/{id}/reset-password")
@@ -44,7 +44,7 @@ public class AdminAccountController {
                                       @PathVariable("id") Long targetId) {
         adminAccountService.resetPassword(adminId, targetId);
         adminLogService.log(adminId, "reset_password", "admin_account", targetId, "重置管理员密码");
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/{id}/toggle")
@@ -52,6 +52,6 @@ public class AdminAccountController {
                                @PathVariable("id") Long targetId) {
         adminAccountService.toggleAccount(adminId, targetId);
         adminLogService.log(adminId, "toggle_admin", "admin_account", targetId, "切换管理员状态");
-        return Result.ok();
+        return Result.success();
     }
 }

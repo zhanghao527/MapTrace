@@ -16,15 +16,16 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(
   (res) => {
     const data = res.data;
-    if (data.code === 200) return data.data;
+    // 统一错误码：0 = 成功，40100 = 未登录
+    if (data.code === 0) return data.data;
+    if (data.code === 40100) {
+      localStorage.removeItem('admin_token');
+      window.location.hash = '#/login';
+    }
     message.error(data.message || '请求失败');
     return Promise.reject(new Error(data.message));
   },
   (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('admin_token');
-      window.location.hash = '#/login';
-    }
     message.error(err.response?.data?.message || err.message || '网络错误');
     return Promise.reject(err);
   }

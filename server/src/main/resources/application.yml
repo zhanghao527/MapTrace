@@ -29,3 +29,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Knife4j API 文档
+knife4j:
+  enable: true
+  openapi:
+    title: 时光地图 API
+    version: 1.0.0
+    description: 时光地图后端服务接口文档

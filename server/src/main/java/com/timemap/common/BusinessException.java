@@ -1,31 +1,27 @@
 package com.timemap.common;
 
+import lombok.Getter;
+
 /**
- * 业务异常类
- * 用于抛出带有错误码的业务异常
+ * 业务异常类，对齐模版规范
  */
+@Getter
 public class BusinessException extends RuntimeException {
-    
-    private final ErrorCode errorCode;
-    private final String customMessage;
-    
+
+    private final int code;
+
+    public BusinessException(int code, String message) {
+        super(message);
+        this.code = code;
+    }
+
     public BusinessException(ErrorCode errorCode) {
         super(errorCode.getMessage());
-        this.errorCode = errorCode;
-        this.customMessage = null;
+        this.code = errorCode.getCode();
     }
-    
-    public BusinessException(ErrorCode errorCode, String customMessage) {
-        super(customMessage);
-        this.errorCode = errorCode;
-        this.customMessage = customMessage;
-    }
-    
-    public int getCode() {
-        return errorCode.getCode();
-    }
-    
-    public String getCustomMessage() {
-        return customMessage != null ? customMessage : errorCode.getMessage();
+
+    public BusinessException(ErrorCode errorCode, String message) {
+        super(message);
+        this.code = errorCode.getCode();
     }
 }

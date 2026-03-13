@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, Col, Row, Statistic, Spin } from 'antd';
 import { AlertOutlined, ClockCircleOutlined, BellOutlined, UserAddOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import { getDashboardStats } from '../utils/api';
+import { getDashboardStats } from '../api';
 
 export default function Dashboard() {
   const { data, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboardStats });

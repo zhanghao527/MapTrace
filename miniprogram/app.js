@@ -55,7 +55,7 @@ App({
             data: { code: loginRes.code },
             header: { 'Content-Type': 'application/json' },
             success: (resp) => {
-              if (resp.data && resp.data.code === 200) {
+              if (resp.data && resp.data.code === 0) {
                 const d = resp.data.data;
                 this.globalData.token = d.token;
                 wx.setStorageSync('token', d.token);
@@ -88,7 +88,7 @@ App({
           'Authorization': 'Bearer ' + this.globalData.token
         },
         success: (resp) => {
-          if (resp.data && resp.data.code === 200) {
+          if (resp.data && resp.data.code === 0) {
             const info = resp.data.data || {};
             this.setUserInfo(info);
             this.setAuthState(info);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Tag } from 'antd';
-import { getLogs } from '../utils/api';
+import { getLogs } from '../api';
 
 const actionMap: Record<string, { text: string; color: string }> = {
   resolve_report: { text: '采纳举报', color: 'green' },

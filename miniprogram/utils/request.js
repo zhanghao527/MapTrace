@@ -14,9 +14,9 @@ function request(url, method, data) {
         'Authorization': app.globalData.token ? `Bearer ${app.globalData.token}` : ''
       },
       success(res) {
-        if (res.data.code === 200) {
+        if (res.data.code === 0) {
           resolve(res.data);
-        } else if (res.data.code === 401) {
+        } else if (res.data.code === 40100) {
           // 未登录状态访问公开接口，静默 reject
           if (!app.globalData.token) {
             reject(res.data);
@@ -59,9 +59,9 @@ function uploadFile(url, filePath, formData) {
           reject({ code: -1, message: '服务器响应异常' });
           return;
         }
-        if (data.code === 200) {
+        if (data.code === 0) {
           resolve(data);
-        } else if (data.code === 401) {
+        } else if (data.code === 40100) {
           app.logout();
           wx.showToast({ title: '请先登录', icon: 'none' });
           wx.navigateTo({ url: '/pages/profile/profile' });

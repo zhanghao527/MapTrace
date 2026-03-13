@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Tag, Input, Select, Space, Avatar, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { getUsers } from '../utils/api';
+import { getUsers } from '../api';
 
 export default function Users() {
   const navigate = useNavigate();

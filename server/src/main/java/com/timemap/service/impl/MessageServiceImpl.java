@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.timemap.mapper.MessageMapper;
 import com.timemap.mapper.UserMapper;
-import com.timemap.model.dto.ConversationResponse;
-import com.timemap.model.dto.MessageResponse;
+import com.timemap.model.vo.ConversationVO;
+import com.timemap.model.vo.MessageVO;
 import com.timemap.model.dto.SendMessageRequest;
 import com.timemap.model.entity.Message;
 import com.timemap.model.entity.User;
@@ -26,12 +26,12 @@ public class MessageServiceImpl implements MessageService {
     private final BusinessMetricsCollector metricsCollector;
 
     @Override
-    public List<ConversationResponse> getConversations(Long userId) {
+    public List<ConversationVO> getConversations(Long userId) {
         return messageMapper.findConversations(userId);
     }
 
     @Override
-    public List<MessageResponse> getChatHistory(Long userId, Long otherUserId, int page, int size) {
+    public List<MessageVO> getChatHistory(Long userId, Long otherUserId, int page, int size) {
         Page<Message> p = new Page<>(page, size);
         LambdaQueryWrapper<Message> qw = new LambdaQueryWrapper<Message>()
                 .and(w -> w
@@ -45,7 +45,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public MessageResponse sendMessage(SendMessageRequest req, Long userId) {
+    public MessageVO sendMessage(SendMessageRequest req, Long userId) {
         Message msg = new Message();
         msg.setFromUserId(userId);
         msg.setToUserId(req.getToUserId());
@@ -72,8 +72,8 @@ public class MessageServiceImpl implements MessageService {
                 .eq(Message::getReadStatus, 0)));
     }
 
-    private MessageResponse toResponse(Message m) {
-        MessageResponse r = new MessageResponse();
+    private MessageVO toResponse(Message m) {
+        MessageVO r = new MessageVO();
         r.setId(m.getId());
         r.setFromUserId(m.getFromUserId());
         r.setToUserId(m.getToUserId());

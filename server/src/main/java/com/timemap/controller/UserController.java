@@ -1,8 +1,10 @@
 package com.timemap.controller;
 
+import com.timemap.common.ErrorCode;
 import com.timemap.common.Result;
+import com.timemap.common.ThrowUtils;
 import com.timemap.model.dto.UpdateProfileRequest;
-import com.timemap.model.dto.UserInfoResponse;
+import com.timemap.model.vo.UserInfoVO;
 import com.timemap.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,27 +19,24 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/profile")
-    public Result<UserInfoResponse> updateProfile(
+    public Result<UserInfoVO> updateProfile(
             @RequestAttribute("userId") Long userId,
-            @Valid @RequestBody UpdateProfileRequest request
-    ) {
-        UserInfoResponse response = userService.updateProfile(userId, request);
-        return Result.ok(response);
+            @Valid @RequestBody UpdateProfileRequest request) {
+        UserInfoVO response = userService.updateProfile(userId, request);
+        return Result.success(response);
     }
 
     @GetMapping("/info")
-    public Result<UserInfoResponse> getUserInfo(@RequestAttribute("userId") Long userId) {
-        UserInfoResponse response = userService.getUserInfo(userId);
-        return Result.ok(response);
+    public Result<UserInfoVO> getUserInfo(@RequestAttribute("userId") Long userId) {
+        UserInfoVO response = userService.getUserInfo(userId);
+        return Result.success(response);
     }
 
     @PostMapping("/avatar")
-    public Result<UserInfoResponse> uploadAvatar(
+    public Result<UserInfoVO> uploadAvatar(
             @RequestAttribute("userId") Long userId,
             @RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return Result.fail("请选择头像");
-        }
-        return Result.ok(userService.uploadAvatar(userId, file));
+        ThrowUtils.throwIf(file.isEmpty(), ErrorCode.PARAMS_ERROR, "请选择头像");
+        return Result.success(userService.uploadAvatar(userId, file));
     }
 }

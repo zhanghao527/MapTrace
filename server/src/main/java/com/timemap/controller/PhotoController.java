@@ -1,14 +1,20 @@
 package com.timemap.controller;
 
+import com.timemap.common.ErrorCode;
 import com.timemap.common.Result;
-import com.timemap.model.dto.NearbyPhotoResponse;
-import com.timemap.model.dto.PhotoDetailResponse;
+import com.timemap.common.ThrowUtils;
+import com.timemap.model.vo.CommunityPageVO;
+import com.timemap.model.vo.NearbyPhotoVO;
+import com.timemap.model.vo.PhotoDetailVO;
+import com.timemap.model.vo.UserProfileVO;
 import com.timemap.service.PhotoService;
+import com.timemap.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,9 +25,10 @@ import java.util.Map;
 public class PhotoController {
 
     private final PhotoService photoService;
+    private final UserService userService;
 
     @PostMapping("/upload")
-    public Result<PhotoDetailResponse> upload(
+    public Result<PhotoDetailVO> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam("longitude") Double longitude,
             @RequestParam("latitude") Double latitude,
@@ -30,38 +37,35 @@ public class PhotoController {
             @RequestParam(value = "district", required = false) String district,
             @RequestParam(value = "description", required = false) String description,
             @RequestAttribute("userId") Long userId) {
-        if (file.isEmpty()) {
-            return Result.fail("请选择要上传的图片");
-        }
-        PhotoDetailResponse photo = photoService.upload(
+        userService.checkBanUpload(userId);
+        ThrowUtils.throwIf(file.isEmpty(), ErrorCode.PARAMS_ERROR, "请选择要上传的图片");
+        PhotoDetailVO photo = photoService.upload(
                 file, userId, longitude, latitude, locationName, photoDate, description, district);
-        return Result.ok(photo);
+        return Result.success(photo);
     }
 
     @GetMapping("/nearby")
-    public Result<List<NearbyPhotoResponse>> nearby(
+    public Result<List<NearbyPhotoVO>> nearby(
             @RequestParam("latitude") double latitude,
             @RequestParam("longitude") double longitude,
             @RequestParam(value = "radius", defaultValue = "10") double radius,
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate) {
-        List<NearbyPhotoResponse> list = photoService.findNearby(
+        List<NearbyPhotoVO> list = photoService.findNearby(
                 latitude, longitude, radius, startDate, endDate);
-        return Result.ok(list);
+        return Result.success(list);
     }
 
     @GetMapping("/detail/{id}")
-    public Result<PhotoDetailResponse> detail(
+    public Result<PhotoDetailVO> detail(
             @PathVariable Long id,
             @RequestAttribute(value = "userId", required = false) Long userId) {
         log.info("[PhotoController] detail 请求: photoId={}, userId={}", id, userId);
-        PhotoDetailResponse photo = photoService.getDetail(id, userId);
-        if (photo == null) {
-            return Result.fail("照片不存在");
-        }
-        log.info("[PhotoController] detail 响应: photoId={}, liked={}, likeCount={}", 
+        PhotoDetailVO photo = photoService.getDetail(id, userId);
+        ThrowUtils.throwIf(photo == null, ErrorCode.PHOTO_NOT_FOUND);
+        log.info("[PhotoController] detail 响应: photoId={}, liked={}, likeCount={}",
                 id, photo.getLiked(), photo.getLikeCount());
-        return Result.ok(photo);
+        return Result.success(photo);
     }
 
     @PostMapping("/like")
@@ -69,27 +73,27 @@ public class PhotoController {
             @RequestParam("photoId") Long photoId,
             @RequestAttribute("userId") Long userId) {
         Map<String, Object> result = photoService.toggleLike(photoId, userId);
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @GetMapping("/batch")
-    public Result<List<PhotoDetailResponse>> batch(
+    public Result<List<PhotoDetailVO>> batch(
             @RequestParam("ids") String ids,
             @RequestAttribute(value = "userId", required = false) Long userId) {
         log.info("[PhotoController] batch 请求: ids={}, userId={}", ids, userId);
-        List<PhotoDetailResponse> list = photoService.getBatchDetail(ids, userId);
+        List<PhotoDetailVO> list = photoService.getBatchDetail(ids, userId);
         log.info("[PhotoController] batch 响应: 返回 {} 张照片", list.size());
-        return Result.ok(list);
+        return Result.success(list);
     }
 
     @GetMapping("/community")
-    public Result<com.timemap.model.dto.CommunityPageResponse> community(
+    public Result<CommunityPageVO> community(
             @RequestParam("district") String district,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "sortBy", defaultValue = "photoDate") String sortBy) {
-        com.timemap.model.dto.CommunityPageResponse data = photoService.findCommunity(district, page, size, sortBy);
-        return Result.ok(data);
+        CommunityPageVO data = photoService.findCommunity(district, page, size, sortBy);
+        return Result.success(data);
     }
 
     @GetMapping("/stats")
@@ -98,7 +102,7 @@ public class PhotoController {
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate) {
         Map<String, Long> stats = photoService.getAreaStats(district, startDate, endDate);
-        return Result.ok(stats);
+        return Result.success(stats);
     }
 
     @GetMapping("/my")
@@ -107,10 +111,10 @@ public class PhotoController {
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         Map<String, Object> photos = photoService.getMyPhotos(userId, page, size);
-        com.timemap.model.dto.UserProfileResponse profile = photoService.getUserProfile(userId);
-        Map<String, Object> result = new java.util.HashMap<>(photos);
+        UserProfileVO profile = photoService.getUserProfile(userId);
+        Map<String, Object> result = new HashMap<>(photos);
         result.put("user", profile);
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @PostMapping("/delete")
@@ -118,7 +122,7 @@ public class PhotoController {
             @RequestParam("photoId") Long photoId,
             @RequestAttribute("userId") Long userId) {
         photoService.deletePhoto(photoId, userId);
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/user/{userId}")
@@ -127,10 +131,9 @@ public class PhotoController {
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         Map<String, Object> photos = photoService.getMyPhotos(userId, page, size);
-        com.timemap.model.dto.UserProfileResponse profile = photoService.getUserProfile(userId);
-        Map<String, Object> result = new java.util.HashMap<>(photos);
+        UserProfileVO profile = photoService.getUserProfile(userId);
+        Map<String, Object> result = new HashMap<>(photos);
         result.put("user", profile);
-        return Result.ok(result);
+        return Result.success(result);
     }
-
 }

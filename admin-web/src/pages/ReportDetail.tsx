@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, Descriptions, Tag, Image, Button, Input, Select, InputNumber, Space, message, Spin, Avatar, Divider } from 'antd';
-import { getReportDetail, resolveReport, rejectReport } from '../utils/api';
+import { getReportDetail, resolveReport, rejectReport } from '../api';
 
 const statusMap: Record<number, { text: string; color: string }> = {
   0: { text: '待处理', color: 'orange' }, 1: { text: '已采纳', color: 'green' }, 2: { text: '已驳回', color: 'red' },

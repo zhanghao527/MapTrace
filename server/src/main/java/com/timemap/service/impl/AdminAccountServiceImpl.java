@@ -3,6 +3,8 @@ package com.timemap.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.timemap.common.BusinessException;
+import com.timemap.common.ErrorCode;
 import com.timemap.mapper.AdminAccountMapper;
 import com.timemap.mapper.AdminLoginLogMapper;
 import com.timemap.model.dto.*;
@@ -40,23 +42,23 @@ public class AdminAccountServiceImpl implements AdminAccountService {
 
     @Override
     @Transactional
-    public AdminLoginResponse login(AdminLoginRequest request, String ip, String userAgent) {
+    public AdminLoginVO login(AdminLoginRequest request, String ip, String userAgent) {
         AdminAccount account = adminAccountMapper.selectOne(
                 new LambdaQueryWrapper<AdminAccount>().eq(AdminAccount::getUsername, request.getUsername()));
         if (account == null) {
             logLogin(0L, "login_fail", ip, userAgent, "账号不存在: " + request.getUsername());
             metricsCollector.recordAdminLogin("fail");
-            throw new RuntimeException("账号或密码错误");
+            throw new BusinessException(ErrorCode.ADMIN_LOGIN_FAILED);
         }
         if (account.getIsEnabled() == 0) {
             logLogin(account.getId(), "login_fail", ip, userAgent, "账号已禁用");
             metricsCollector.recordAdminLogin("fail");
-            throw new RuntimeException("账号已被禁用");
+            throw new BusinessException(ErrorCode.ADMIN_ACCOUNT_LOCKED, "账号已被禁用");
         }
         if (account.getLockUntil() != null && account.getLockUntil().isAfter(LocalDateTime.now())) {
             logLogin(account.getId(), "login_fail", ip, userAgent, "账号锁定中");
             metricsCollector.recordAdminLogin("fail");
-            throw new RuntimeException("账号已锁定，请" + LOCK_MINUTES + "分钟后再试");
+            throw new BusinessException(ErrorCode.ADMIN_ACCOUNT_LOCKED, "账号已锁定，请" + LOCK_MINUTES + "分钟后再试");
         }
         if (!ENCODER.matches(request.getPassword(), account.getPasswordHash())) {
             int failCount = (account.getLoginFailCount() != null ? account.getLoginFailCount() : 0) + 1;
@@ -68,7 +70,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
             adminAccountMapper.updateById(account);
             logLogin(account.getId(), "login_fail", ip, userAgent, "密码错误，第" + failCount + "次");
             metricsCollector.recordAdminLogin("fail");
-            throw new RuntimeException("账号或密码错误");
+            throw new BusinessException(ErrorCode.ADMIN_LOGIN_FAILED);
         }
         // Login success
         account.setLoginFailCount(0);
@@ -80,7 +82,6 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         metricsCollector.recordAdminLogin("success");
 
         boolean mustChange = account.getMustChangePassword() != null && account.getMustChangePassword() == 1;
-        // Check password expiry
         if (!mustChange && account.getPasswordChangedAt() != null) {
             if (account.getPasswordChangedAt().plusDays(PASSWORD_EXPIRE_DAYS).isBefore(LocalDateTime.now())) {
                 mustChange = true;
@@ -90,7 +91,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         boolean rememberMe = request.getRememberMe() != null && request.getRememberMe();
         String token = jwtUtil.generateAdminToken(account.getId(), account.getRole(), rememberMe);
 
-        AdminLoginResponse resp = new AdminLoginResponse();
+        AdminLoginVO resp = new AdminLoginVO();
         resp.setToken(token);
         resp.setRole(account.getRole());
         resp.setNickname(account.getNickname());
@@ -100,9 +101,9 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     }
 
     @Override
-    public AdminAccountResponse getInfo(Long adminId) {
+    public AdminAccountVO getInfo(Long adminId) {
         AdminAccount account = adminAccountMapper.selectById(adminId);
-        if (account == null) throw new RuntimeException("管理员不存在");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         return toResponse(account);
     }
 
@@ -110,16 +111,15 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     @Transactional
     public void changePassword(Long adminId, AdminChangePasswordRequest request, String ip, String userAgent) {
         AdminAccount account = adminAccountMapper.selectById(adminId);
-        if (account == null) throw new RuntimeException("管理员不存在");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         if (!ENCODER.matches(request.getOldPassword(), account.getPasswordHash())) {
-            throw new RuntimeException("原密码错误");
+            throw new BusinessException(ErrorCode.ADMIN_LOGIN_FAILED, "原密码错误");
         }
         validatePasswordComplexity(request.getNewPassword());
-        // Check password history
         List<String> history = parseHistory(account.getPasswordHistory());
         for (String h : history) {
             if (ENCODER.matches(request.getNewPassword(), h)) {
-                throw new RuntimeException("不能使用最近3次使用过的密码");
+                throw new BusinessException(ErrorCode.ADMIN_PASSWORD_REUSED);
             }
         }
         String newHash = ENCODER.encode(request.getNewPassword());
@@ -135,7 +135,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     }
 
     @Override
-    public List<AdminAccountResponse> listAccounts(Long adminId) {
+    public List<AdminAccountVO> listAccounts(Long adminId) {
         requireRole(adminId, "super_admin");
         List<AdminAccount> accounts = adminAccountMapper.selectList(
                 new LambdaQueryWrapper<AdminAccount>().orderByDesc(AdminAccount::getCreateTime));
@@ -144,11 +144,11 @@ public class AdminAccountServiceImpl implements AdminAccountService {
 
     @Override
     @Transactional
-    public AdminAccountResponse createAccount(Long adminId, CreateAdminAccountRequest request) {
+    public AdminAccountVO createAccount(Long adminId, CreateAdminAccountRequest request) {
         requireRole(adminId, "super_admin");
         long exists = adminAccountMapper.selectCount(
                 new LambdaQueryWrapper<AdminAccount>().eq(AdminAccount::getUsername, request.getUsername()));
-        if (exists > 0) throw new RuntimeException("账号已存在");
+        if (exists > 0) throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号已存在");
         validatePasswordComplexity(request.getPassword());
 
         AdminAccount account = new AdminAccount();
@@ -170,7 +170,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     public void updateAccount(Long adminId, Long targetId, CreateAdminAccountRequest request) {
         requireRole(adminId, "super_admin");
         AdminAccount account = adminAccountMapper.selectById(targetId);
-        if (account == null) throw new RuntimeException("管理员不存在");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         if (request.getNickname() != null) account.setNickname(request.getNickname());
         if (request.getRole() != null) account.setRole(request.getRole());
         if (request.getLinkedUserId() != null) account.setLinkedUserId(request.getLinkedUserId());
@@ -182,7 +182,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     public void resetPassword(Long adminId, Long targetId) {
         requireRole(adminId, "super_admin");
         AdminAccount account = adminAccountMapper.selectById(targetId);
-        if (account == null) throw new RuntimeException("管理员不存在");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         account.setPasswordHash(ENCODER.encode(DEFAULT_PASSWORD));
         account.setMustChangePassword(1);
         account.setLoginFailCount(0);
@@ -195,44 +195,42 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     public void toggleAccount(Long adminId, Long targetId) {
         requireRole(adminId, "super_admin");
         AdminAccount account = adminAccountMapper.selectById(targetId);
-        if (account == null) throw new RuntimeException("管理员不存在");
-        if (account.getId().equals(adminId)) throw new RuntimeException("不能禁用自己的账号");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
+        if (account.getId().equals(adminId)) throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "不能禁用自己的账号");
         account.setIsEnabled(account.getIsEnabled() == 1 ? 0 : 1);
         adminAccountMapper.updateById(account);
     }
 
-    // ---- helpers ----
-
     private void requireRole(Long adminId, String... roles) {
         AdminAccount account = adminAccountMapper.selectById(adminId);
-        if (account == null) throw new RuntimeException("管理员不存在");
+        if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         for (String role : roles) {
             if (role.equals(account.getRole())) return;
         }
-        throw new RuntimeException("权限不足");
+        throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
     }
 
     private void validatePasswordComplexity(String password) {
         if (password == null || password.length() < 8) {
-            throw new RuntimeException("密码长度至少8位");
+            throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码长度至少8位");
         }
         if (!password.matches(".*[a-z].*") || !password.matches(".*[A-Z].*") || !password.matches(".*\\d.*")) {
-            throw new RuntimeException("密码必须包含大小写字母和数字");
+            throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码必须包含大小写字母和数字");
         }
     }
 
     private void logLogin(Long adminId, String action, String ip, String userAgent, String detail) {
-        AdminLoginLog log = new AdminLoginLog();
-        log.setAdminAccountId(adminId);
-        log.setAction(action);
-        log.setIp(ip != null ? ip : "");
-        log.setUserAgent(userAgent != null && userAgent.length() > 500 ? userAgent.substring(0, 500) : (userAgent != null ? userAgent : ""));
-        log.setDetail(detail != null ? detail : "");
-        adminLoginLogMapper.insert(log);
+        AdminLoginLog loginLog = new AdminLoginLog();
+        loginLog.setAdminAccountId(adminId);
+        loginLog.setAction(action);
+        loginLog.setIp(ip != null ? ip : "");
+        loginLog.setUserAgent(userAgent != null && userAgent.length() > 500 ? userAgent.substring(0, 500) : (userAgent != null ? userAgent : ""));
+        loginLog.setDetail(detail != null ? detail : "");
+        adminLoginLogMapper.insert(loginLog);
     }
 
-    private AdminAccountResponse toResponse(AdminAccount a) {
-        AdminAccountResponse r = new AdminAccountResponse();
+    private AdminAccountVO toResponse(AdminAccount a) {
+        AdminAccountVO r = new AdminAccountVO();
         r.setId(a.getId());
         r.setUsername(a.getUsername());
         r.setNickname(a.getNickname());

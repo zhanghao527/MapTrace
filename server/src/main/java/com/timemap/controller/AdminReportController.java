@@ -20,20 +20,20 @@ public class AdminReportController {
     private final AdminLogService adminLogService;
 
     @GetMapping("/list")
-    public Result<AdminReportPageResponse> list(
+    public Result<AdminReportPageVO> list(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "status", required = false) Integer status,
             @RequestParam(value = "targetType", required = false) String targetType,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(reportService.getAdminReports(userId, status, targetType, page, size));
+        return Result.success(reportService.getAdminReports(userId, status, targetType, page, size));
     }
 
     @GetMapping("/detail/{id}")
-    public Result<AdminReportDetailResponse> detail(
+    public Result<AdminReportDetailVO> detail(
             @RequestAttribute("userId") Long userId,
             @PathVariable("id") Long id) {
-        return Result.ok(reportService.getAdminReportDetail(userId, id));
+        return Result.success(reportService.getAdminReportDetail(userId, id));
     }
 
     @PostMapping("/resolve")
@@ -41,7 +41,7 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody ResolveReportRequest request) {
         reportService.resolveReport(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/reject")
@@ -49,7 +49,7 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody RejectReportRequest request) {
         reportService.rejectReport(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/batch-resolve")
@@ -57,7 +57,7 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody BatchReportActionRequest request) {
         reportService.batchResolve(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/batch-reject")
@@ -65,23 +65,23 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody BatchReportActionRequest request) {
         reportService.batchReject(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/pending-count")
-    public Result<PendingReportCountResponse> pendingCount(
+    public Result<PendingReportCountVO> pendingCount(
             @RequestAttribute("userId") Long userId) {
-        PendingReportCountResponse r = reportService.getPendingCount(userId);
+        PendingReportCountVO r = reportService.getPendingCount(userId);
         r.setAppealCount(appealService.getPendingCount());
-        return Result.ok(r);
+        return Result.success(r);
     }
 
     @GetMapping("/aggregated")
-    public Result<List<AggregatedReportResponse>> aggregated(
+    public Result<List<AggregatedReportVO>> aggregated(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(reportService.getAggregatedReports(userId, page, size));
+        return Result.success(reportService.getAggregatedReports(userId, page, size));
     }
 
     @PostMapping("/punish")
@@ -89,32 +89,32 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody PunishUserRequest request) {
         reportService.punishUser(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/user-violations")
-    public Result<UserViolationPageResponse> userViolations(
+    public Result<UserViolationPageVO> userViolations(
             @RequestAttribute("userId") Long userId,
             @RequestParam("targetUserId") Long targetUserId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(reportService.getUserViolations(userId, targetUserId, page, size));
+        return Result.success(reportService.getUserViolations(userId, targetUserId, page, size));
     }
 
     @GetMapping("/appeals")
-    public Result<AppealPageResponse> appeals(
+    public Result<AppealPageVO> appeals(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "status", required = false) Integer status,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(appealService.getAdminAppeals(userId, status, page, size));
+        return Result.success(appealService.getAdminAppeals(userId, status, page, size));
     }
 
     @GetMapping("/appeal/{id}")
-    public Result<AppealResponse> appealDetail(
+    public Result<AppealVO> appealDetail(
             @RequestAttribute("userId") Long userId,
             @PathVariable("id") Long id) {
-        return Result.ok(appealService.getAppealDetail(userId, id));
+        return Result.success(appealService.getAppealDetail(userId, id));
     }
 
     @PostMapping("/appeal/resolve")
@@ -122,7 +122,7 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody HandleAppealRequest request) {
         appealService.resolveAppeal(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/appeal/reject")
@@ -130,14 +130,14 @@ public class AdminReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody HandleAppealRequest request) {
         appealService.rejectAppeal(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/logs")
-    public Result<AdminLogPageResponse> logs(
+    public Result<AdminLogPageVO> logs(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(adminLogService.getLogs(userId, page, size));
+        return Result.success(adminLogService.getLogs(userId, page, size));
     }
 }

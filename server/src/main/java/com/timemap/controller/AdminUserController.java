@@ -2,7 +2,9 @@ package com.timemap.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.timemap.common.ErrorCode;
 import com.timemap.common.Result;
+import com.timemap.common.ThrowUtils;
 import com.timemap.mapper.*;
 import com.timemap.model.dto.*;
 import com.timemap.model.entity.*;
@@ -67,13 +69,13 @@ public class AdminUserController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", list);
         result.put("total", p.getTotal());
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @GetMapping("/{id}")
     public Result<Map<String, Object>> detail(@PathVariable("id") Long id) {
         User u = userMapper.selectById(id);
-        if (u == null) throw new RuntimeException("用户不存在");
+        ThrowUtils.throwIf(u == null, ErrorCode.USER_NOT_FOUND);
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", u.getId());
         m.put("nickname", u.getNickname());
@@ -86,7 +88,7 @@ public class AdminUserController {
         m.put("isBanned", u.getIsBanned() != null && u.getIsBanned() == 1);
         m.put("muteUntil", u.getMuteUntil());
         m.put("banUploadUntil", u.getBanUploadUntil());
-        return Result.ok(m);
+        return Result.success(m);
     }
 
     @GetMapping("/{id}/photos")
@@ -94,12 +96,12 @@ public class AdminUserController {
                                                    @RequestParam(value = "page", defaultValue = "1") int page,
                                                    @RequestParam(value = "size", defaultValue = "20") int size) {
         int offset = (page - 1) * size;
-        List<MyPhotoResponse> photos = photoMapper.findMyPhotos(id, offset, size);
+        List<MyPhotoVO> photos = photoMapper.findMyPhotos(id, offset, size);
         long total = photoMapper.countMyPhotos(id);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", photos);
         result.put("total", total);
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @GetMapping("/{id}/comments")
@@ -121,22 +123,22 @@ public class AdminUserController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("list", list);
         result.put("total", p.getTotal());
-        return Result.ok(result);
+        return Result.success(result);
     }
 
     @PostMapping("/punish")
     public Result<Void> punish(@RequestAttribute("adminAccountId") Long adminId,
                                @RequestBody PunishUserRequest request) {
         reportService.punishUser(adminId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @PostMapping("/unpunish")
     public Result<Void> unpunish(@RequestAttribute("adminAccountId") Long adminId,
                                  @RequestBody UnpunishRequest request) {
-        if (request.getUserId() == null) throw new RuntimeException("用户ID不能为空");
+        ThrowUtils.throwIf(request.getUserId() == null, ErrorCode.PARAMS_ERROR, "用户ID不能为空");
         User user = userMapper.selectById(request.getUserId());
-        if (user == null) throw new RuntimeException("用户不存在");
+        ThrowUtils.throwIf(user == null, ErrorCode.USER_NOT_FOUND);
 
         String type = request.getType();
         switch (type != null ? type : "") {
@@ -155,15 +157,15 @@ public class AdminUserController {
                 userMapper.updateById(user);
                 notificationService.createNotification(user.getId(), adminId, "punishment", null, null, "你的账号封禁已被解除");
             }
-            default -> throw new RuntimeException("不支持的解除类型");
+            default -> throw new com.timemap.common.BusinessException(ErrorCode.PARAMS_ERROR, "不支持的解除类型");
         }
         adminLogService.log(adminId, "unpunish_user", "user", user.getId(), "解除处罚: " + type);
-        return Result.ok();
+        return Result.success();
     }
 
     @Data
     public static class UnpunishRequest {
         private Long userId;
-        private String type; // mute, ban_upload, ban_account
+        private String type;
     }
 }

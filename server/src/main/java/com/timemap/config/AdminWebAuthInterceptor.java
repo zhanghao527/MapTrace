@@ -60,8 +60,8 @@ public class AdminWebAuthInterceptor implements HandlerInterceptor {
     }
 
     private void writeError(HttpServletResponse response, int status, String message) throws Exception {
-        response.setStatus(status);
+        response.setStatus(200);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(Result.fail(status, message)));
+        response.getWriter().write(objectMapper.writeValueAsString(Result.error(com.timemap.common.ErrorCode.NOT_LOGIN_ERROR, message)));
     }
 }

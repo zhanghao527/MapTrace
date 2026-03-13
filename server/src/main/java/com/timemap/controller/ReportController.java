@@ -16,29 +16,29 @@ public class ReportController {
     private final AppealService appealService;
 
     @PostMapping("/submit")
-    public Result<ReportSubmitResponse> submit(
+    public Result<ReportSubmitVO> submit(
             @RequestParam("targetType") String targetType,
             @RequestParam("targetId") Long targetId,
             @RequestParam("reason") String reason,
             @RequestParam(value = "description", required = false) String description,
             @RequestAttribute("userId") Long userId) {
-        return Result.ok(reportService.submitReport(targetType, targetId, reason, description, userId));
+        return Result.success(reportService.submitReport(targetType, targetId, reason, description, userId));
     }
 
     @GetMapping("/my")
-    public Result<MyReportPageResponse> myReports(
+    public Result<MyReportPageVO> myReports(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(reportService.getMyReports(userId, page, size));
+        return Result.success(reportService.getMyReports(userId, page, size));
     }
 
     @GetMapping("/my-violations")
-    public Result<UserViolationPageResponse> myViolations(
+    public Result<UserViolationPageVO> myViolations(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(reportService.getMyViolations(userId, page, size));
+        return Result.success(reportService.getMyViolations(userId, page, size));
     }
 
     @PostMapping("/appeal")
@@ -46,14 +46,14 @@ public class ReportController {
             @RequestAttribute("userId") Long userId,
             @RequestBody AppealSubmitRequest request) {
         appealService.submitAppeal(userId, request);
-        return Result.ok();
+        return Result.success();
     }
 
     @GetMapping("/my-appeals")
-    public Result<AppealPageResponse> myAppeals(
+    public Result<AppealPageVO> myAppeals(
             @RequestAttribute("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return Result.ok(appealService.getMyAppeals(userId, page, size));
+        return Result.success(appealService.getMyAppeals(userId, page, size));
     }
 }

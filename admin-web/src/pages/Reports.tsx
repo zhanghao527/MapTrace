@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, Tag, Button, Space, Select, Input, Image, Modal, message, Avatar } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { getReports, batchResolveReports, batchRejectReports } from '../utils/api';
+import { getReports, batchResolveReports, batchRejectReports } from '../api';
 
 const statusMap: Record<number, { text: string; color: string }> = {
   0: { text: '待处理', color: 'orange' },

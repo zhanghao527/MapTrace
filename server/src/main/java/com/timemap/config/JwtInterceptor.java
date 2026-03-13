@@ -47,8 +47,8 @@ public class JwtInterceptor implements HandlerInterceptor {
     }
 
     private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
-        response.setStatus(401);
+        response.setStatus(200);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(Result.fail(401, message)));
+        response.getWriter().write(objectMapper.writeValueAsString(Result.error(com.timemap.common.ErrorCode.NOT_LOGIN_ERROR, message)));
     }
 }

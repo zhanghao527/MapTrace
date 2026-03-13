@@ -1,7 +1,7 @@
 package com.timemap.service;
 
-import com.timemap.model.dto.DashboardStatsResponse;
+import com.timemap.model.vo.DashboardStatsVO;
 
 public interface DashboardService {
-    DashboardStatsResponse getStats();
+    DashboardStatsVO getStats();
 }
