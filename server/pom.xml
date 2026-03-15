@@ -11,11 +11,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.timemap</groupId>
-    <artifactId>timemap-server</artifactId>
+    <groupId>com.maptrace</groupId>
+    <artifactId>maptrace-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>timemap-server</name>
-    <description>时光地图后端服务</description>
+    <name>maptrace-server</name>
+    <description>地图时迹后端服务</description>
 
     <properties>
         <java.version>17</java.version>

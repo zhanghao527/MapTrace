@@ -7,7 +7,7 @@
 ### 1.1 新增/修改文件清单
 
 ```
-server/src/main/java/com/timemap/
+server/src/main/java/com/maptrace/
 ├── controller/AuthController.java        # 登录接口
 ├── service/AuthService.java              # 登录业务逻辑接口
 ├── service/impl/AuthServiceImpl.java     # 登录业务逻辑实现

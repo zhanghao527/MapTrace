@@ -77,7 +77,7 @@ export REDIS_HOST=localhost
 ```bash
 cd server
 source .env  # 加载环境变量
-java -jar target/timemap-server.jar --spring.profiles.active=prod
+java -jar target/maptrace-server.jar --spring.profiles.active=prod
 ```
 
 **优点**：
@@ -123,11 +123,11 @@ mvn spring-boot:run -Dspring.profiles.active=dev
 
 ```bash
 # 方式 1：命令行参数
-java -jar target/timemap-server.jar --spring.profiles.active=prod
+java -jar target/maptrace-server.jar --spring.profiles.active=prod
 
 # 方式 2：环境变量
 export SPRING_PROFILE=prod
-java -jar target/timemap-server.jar
+java -jar target/maptrace-server.jar
 ```
 
 ---
@@ -234,15 +234,15 @@ mvn spring-boot:run
 
 ```bash
 # 1. 在服务器上创建 .env
-nano /opt/timemap/.env
+nano /opt/maptrace/.env
 
 # 2. 写入真实配置
 export DB_PASSWORD=real_password
 export JWT_SECRET=real_secret
 
 # 3. 启动
-source /opt/timemap/.env
-java -jar timemap-server.jar --spring.profiles.active=prod
+source /opt/maptrace/.env
+java -jar maptrace-server.jar --spring.profiles.active=prod
 ```
 
 ---

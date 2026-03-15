@@ -17,13 +17,13 @@
 mysql -u root -p < server/src/main/resources/db/init.sql
 
 # 执行所有迁移脚本
-mysql -u root -p timemap < docs/sql/v04-comments-messages.sql
-mysql -u root -p timemap < docs/sql/v05-notification-report.sql
-mysql -u root -p timemap < docs/sql/v06-report-moderation-phase1.sql
-mysql -u root -p timemap < docs/sql/v07-enterprise-report-governance.sql
-mysql -u root -p timemap < docs/sql/v08-web-admin-console.sql
-mysql -u root -p timemap < docs/sql/v09-enterprise-login-profile.sql
-mysql -u root -p timemap < docs/sql/v10-soft-delete-optimization.sql
+mysql -u root -p maptrace < docs/sql/v04-comments-messages.sql
+mysql -u root -p maptrace < docs/sql/v05-notification-report.sql
+mysql -u root -p maptrace < docs/sql/v06-report-moderation-phase1.sql
+mysql -u root -p maptrace < docs/sql/v07-enterprise-report-governance.sql
+mysql -u root -p maptrace < docs/sql/v08-web-admin-console.sql
+mysql -u root -p maptrace < docs/sql/v09-enterprise-login-profile.sql
+mysql -u root -p maptrace < docs/sql/v10-soft-delete-optimization.sql
 ```
 
 ---
@@ -73,7 +73,7 @@ export MYBATIS_LOG_IMPL=org.apache.ibatis.logging.nologging.NoLoggingImpl
 cd server
 source .env
 mvn clean package -DskipTests
-java -jar target/timemap-server-0.0.1-SNAPSHOT.jar
+java -jar target/maptrace-server-0.0.1-SNAPSHOT.jar
 ```
 
 ### 3.3 验证后端启动
@@ -118,7 +118,7 @@ cd miniprogram
 ## 5. Nginx 配置
 
 ```nginx
-# /etc/nginx/sites-available/timemap
+# /etc/nginx/sites-available/maptrace
 
 # 后端 API
 server {
@@ -149,7 +149,7 @@ server {
 
 ```bash
 # 启用配置
-sudo ln -s /etc/nginx/sites-available/timemap /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/maptrace /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -174,7 +174,7 @@ sudo certbot --nginx -d admin.yourdomain.com
 ### 7.1 修改 CORS 配置
 
 ```java
-// server/src/main/java/com/timemap/config/WebConfig.java
+// server/src/main/java/com/maptrace/config/WebConfig.java
 @Override
 public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/api/**")
@@ -208,7 +208,7 @@ export JWT_SECRET=<生成的密钥>
 ```yaml
 # prometheus.yml
 scrape_configs:
-  - job_name: 'timemap'
+  - job_name: 'maptrace'
     metrics_path: '/api/actuator/prometheus'
     static_configs:
       - targets: ['localhost:8080']
@@ -318,10 +318,10 @@ tail -f /var/log/redis/redis-server.log
 
 ```bash
 # 测试连接
-mysql -h localhost -u root -p timemap
+mysql -h localhost -u root -p maptrace
 
 # 检查用户权限
-GRANT ALL PRIVILEGES ON timemap.* TO 'root'@'localhost';
+GRANT ALL PRIVILEGES ON maptrace.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
@@ -333,20 +333,20 @@ FLUSH PRIVILEGES;
 
 ```bash
 # 备份当前数据库
-mysqldump -u root -p timemap > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u root -p maptrace > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 回滚到备份
-mysql -u root -p timemap < backup_20260311_120000.sql
+mysql -u root -p maptrace < backup_20260311_120000.sql
 ```
 
 ### 应用回滚
 
 ```bash
 # 停止当前版本
-pkill -f timemap-server
+pkill -f maptrace-server
 
 # 启动旧版本
-java -jar timemap-server-0.0.1-SNAPSHOT.old.jar
+java -jar maptrace-server-0.0.1-SNAPSHOT.old.jar
 ```
 
 ---
@@ -365,8 +365,8 @@ java -Xms2g -Xmx4g \
   -XX:+UseG1GC \
   -XX:MaxGCPauseMillis=200 \
   -XX:+HeapDumpOnOutOfMemoryError \
-  -XX:HeapDumpPath=/var/log/timemap/heapdump.hprof \
-  -jar timemap-server.jar
+  -XX:HeapDumpPath=/var/log/maptrace/heapdump.hprof \
+  -jar maptrace-server.jar
 ```
 
 ### 数据库优化

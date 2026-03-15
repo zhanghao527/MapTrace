@@ -20,10 +20,10 @@ mysql -u root -p < docs/sql/v10-soft-delete-optimization-safe.sql
 mysql -u root -p
 ```
 
-### 步骤 2：切换到 timemap 数据库
+### 步骤 2：切换到 maptrace 数据库
 
 ```sql
-USE timemap;
+USE maptrace;
 ```
 
 ### 步骤 3：检查并添加 district 字段

@@ -1,12 +1,12 @@
 -- v10: 软删除优化 - 支持内容恢复（安全版本，可重复执行）
 
-USE timemap;
+USE maptrace;
 
 -- 1. 为 t_photo 添加 district 字段（如果还没有）
 SET @col_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_photo' 
     AND COLUMN_NAME = 'district'
 );
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `t_cos_delete_record` (
 SET @index_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.STATISTICS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_photo' 
     AND INDEX_NAME = 'idx_district_date'
 );
@@ -60,7 +60,7 @@ DEALLOCATE PREPARE stmt;
 SET @index_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.STATISTICS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_comment' 
     AND INDEX_NAME = 'idx_user_time'
 );
@@ -78,7 +78,7 @@ DEALLOCATE PREPARE stmt;
 SET @index_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.STATISTICS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_report' 
     AND INDEX_NAME = 'idx_handler_time'
 );
@@ -96,7 +96,7 @@ DEALLOCATE PREPARE stmt;
 SET @index_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.STATISTICS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_user' 
     AND INDEX_NAME = 'idx_user_phone'
 );
@@ -116,7 +116,7 @@ DEALLOCATE PREPARE stmt;
 SET @col_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_user' 
     AND COLUMN_NAME = 'violation_count'
 );
@@ -134,7 +134,7 @@ DEALLOCATE PREPARE stmt;
 SET @col_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_user' 
     AND COLUMN_NAME = 'is_banned'
 );
@@ -152,7 +152,7 @@ DEALLOCATE PREPARE stmt;
 SET @col_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_user' 
     AND COLUMN_NAME = 'mute_until'
 );
@@ -170,7 +170,7 @@ DEALLOCATE PREPARE stmt;
 SET @col_exists = (
     SELECT COUNT(*) 
     FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = 'timemap' 
+    WHERE TABLE_SCHEMA = 'maptrace' 
     AND TABLE_NAME = 't_user' 
     AND COLUMN_NAME = 'ban_upload_until'
 );

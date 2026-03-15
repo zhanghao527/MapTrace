@@ -49,7 +49,7 @@ export REDIS_HOST=localhost
 export DB_PASSWORD=your_password
 
 # 然后启动应用
-java -jar target/timemap-server.jar
+java -jar target/maptrace-server.jar
 ```
 
 ---
@@ -199,7 +199,7 @@ mvn spring-boot:run
 ### 方式 2：在启动命令中设置
 
 ```bash
-JWT_SECRET=xxx REDIS_HOST=localhost java -jar target/timemap-server.jar
+JWT_SECRET=xxx REDIS_HOST=localhost java -jar target/maptrace-server.jar
 ```
 
 ### 方式 3：在 IDE 中配置
@@ -279,7 +279,7 @@ echo $REDIS_HOST
 1. **不要使用默认值**
    ```bash
    # 危险！
-   export JWT_SECRET=timemap-dev-secret-key-change-in-production
+   export JWT_SECRET=maptrace-dev-secret-key-change-in-production
    ```
 
 2. **不要在代码中硬编码**
@@ -306,14 +306,14 @@ echo $REDIS_HOST
 ```bash
 # 每次启动前加载
 source .env
-java -jar target/timemap-server.jar
+java -jar target/maptrace-server.jar
 ```
 
 或者写一个启动脚本：
 ```bash
 #!/bin/bash
 source .env
-java -jar target/timemap-server.jar
+java -jar target/maptrace-server.jar
 ```
 
 ---
@@ -324,7 +324,7 @@ java -jar target/timemap-server.jar
 
 ```bash
 # 方式 1：命令行
-docker run -e JWT_SECRET=xxx -e REDIS_HOST=redis timemap-server
+docker run -e JWT_SECRET=xxx -e REDIS_HOST=redis maptrace-server
 
 # 方式 2：docker-compose.yml
 services:
@@ -366,7 +366,7 @@ export REDIS_PASSWORD=
 export COS_SECRET_ID=AKIDxxxxxxxxxxxxxxxxxxxxx
 export COS_SECRET_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
 export COS_REGION=ap-shanghai
-export COS_BUCKET=timemap-prod-bucket
+export COS_BUCKET=maptrace-prod-bucket
 
 # 微信小程序
 export WX_APP_ID=wx1234567890abcdef
