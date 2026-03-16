@@ -26,8 +26,8 @@ data/
 *.wal
 
 # 环境配置
-*.env
 *.env.local
+*.env.development
 server/.env
 miniprogram/project.private.config.json
 server/src/main/resources/application-local.yml

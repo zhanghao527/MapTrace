@@ -1,6 +1,9 @@
 App({
   globalData: {
-    baseUrl: 'https://maptrace.top/api',
+    // 自动判断环境：正式版用线上，开发版/体验版用本地
+    baseUrl: (typeof __wxConfig !== 'undefined' && __wxConfig.envVersion === 'release')
+      ? 'https://maptrace.top/api'
+      : 'http://localhost:8080/api',
     mapKey: 'HXKBZ-VM7L5-E4TII-ITIGH-2TYAV-BJFYS',
     token: '',
     userInfo: null,
