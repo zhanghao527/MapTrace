@@ -1,5 +1,9 @@
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force-response: true   # 确保 JSON 等响应使用 UTF-8，避免中文乱码
   tomcat:
     max-swallow-size: -1
     max-http-form-post-size: -1

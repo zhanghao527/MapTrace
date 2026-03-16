@@ -140,7 +140,7 @@
     latitude="{{latitude}}" longitude="{{longitude}}"
     scale="{{scale}}" markers="{{markers}}"
     show-location
-    enable-poi="{{false}}"
+    enable-poi
     bindtap="onMapTap"
     bindmarkertap="onMarkerTap"
     bindcallouttap="onMarkerTap"
