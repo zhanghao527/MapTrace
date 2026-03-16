@@ -1,4 +1,5 @@
 const { request, checkLogin } = require('../../utils/request');
+const ws = require('../../utils/websocket');
 
 const TYPE_LABELS = {
   comment: '评论了你的照片',
@@ -27,12 +28,40 @@ Page({
 
   onShow() {
     if (!checkLogin()) return;
+    this._registerWsListener();
     if (this.data.activeTab === 'chat') {
       this.loadConversations();
     } else {
       this.loadNotifications(true);
     }
     this.loadUnreadCounts();
+  },
+
+  onHide() {
+    this._unregisterWsListener();
+  },
+
+  onUnload() {
+    this._unregisterWsListener();
+  },
+
+  _registerWsListener() {
+    if (this._wsHandler) return;
+    this._wsHandler = () => {
+      // 收到新消息时刷新会话列表和未读数
+      if (this.data.activeTab === 'chat') {
+        this.loadConversations();
+      }
+      this.loadUnreadCounts();
+    };
+    ws.on('new_message', this._wsHandler);
+  },
+
+  _unregisterWsListener() {
+    if (this._wsHandler) {
+      ws.off('new_message', this._wsHandler);
+      this._wsHandler = null;
+    }
   },
 
   onPullDownRefresh() {

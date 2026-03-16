@@ -213,8 +213,11 @@ Page({
         });
         this.setData({ comments });
       }
-      // 评论成功后请求订阅授权，下次有人回复时可推送
-      requestSubscribe('interaction');
+      // 评论成功后请求订阅授权（同一会话只弹一次，避免频繁打扰）
+      if (!app.globalData._subscribedInteraction) {
+        requestSubscribe('interaction');
+        app.globalData._subscribedInteraction = true;
+      }
     }).catch(() => {
       if (body.parentId === 0) {
         const comments = this.data.comments.filter(c => c.id !== optimistic.id);
@@ -374,8 +377,11 @@ Page({
     request(url, 'POST')
       .then(() => {
         wx.showToast({ title: '举报已提交', icon: 'success' });
-        // 举报成功后请求订阅授权，处理结果可推送
-        requestSubscribe('report');
+        // 举报成功后请求订阅授权（同一会话只弹一次）
+        if (!app.globalData._subscribedReport) {
+          requestSubscribe('report');
+          app.globalData._subscribedReport = true;
+        }
       })
       .catch((err) => { wx.showToast({ title: (err && err.message) || '举报失败', icon: 'none' }); });
   },

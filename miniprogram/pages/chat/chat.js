@@ -1,158 +1,107 @@
 const { request, checkLogin } = require('../../utils/request');
+const ws = require('../../utils/websocket');
 const app = getApp();
 
 const PAGE_SIZE = 30;
 const DEFAULT_TITLE = '私信';
-const POLL_INTERVAL = 5000;
+const FALLBACK_POLL_INTERVAL = 5000;
 const TIME_SEPARATOR_GAP = 5 * 60 * 1000;
-const TEMP_MERGE_GAP = 2 * 60 * 1000;
 
 function safeDecode(value) {
   if (!value) return '';
-  try {
-    return decodeURIComponent(value);
-  } catch (err) {
-    return value;
-  }
+  try { return decodeURIComponent(value); } catch (e) { return value; }
 }
 
-function pad2(value) {
-  const num = Number(value) || 0;
-  return num < 10 ? '0' + num : String(num);
+function pad2(v) {
+  return (Number(v) || 0) < 10 ? '0' + v : String(v);
 }
 
 function parseDateTime(value) {
-  if (value === undefined || value === null || value === '') return null;
-
-  if (value instanceof Date) {
-    return isNaN(value.getTime()) ? null : value;
-  }
-
+  if (value == null || value === '') return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
   if (typeof value === 'number') {
-    const timestamp = value < 1000000000000 ? value * 1000 : value;
-    const date = new Date(timestamp);
-    return isNaN(date.getTime()) ? null : date;
+    var ts = value < 1e12 ? value * 1000 : value;
+    var d = new Date(ts);
+    return isNaN(d.getTime()) ? null : d;
   }
-
-  const raw = String(value).trim();
+  var raw = String(value).trim();
   if (!raw) return null;
-
-  const normalized = raw
-    .replace(/\.\d+$/, '')
-    .replace('T', ' ')
-    .replace(/-/g, '/');
-
-  const directDate = new Date(normalized);
-  if (!isNaN(directDate.getTime())) {
-    return directDate;
+  // 纯数字字符串当时间戳
+  if (/^\d{10,13}$/.test(raw)) {
+    var n = Number(raw);
+    var ms = n < 1e12 ? n * 1000 : n;
+    var dt = new Date(ms);
+    return isNaN(dt.getTime()) ? null : dt;
   }
-
-  const timestamp = Date.parse(raw);
-  if (!isNaN(timestamp)) {
-    return new Date(timestamp);
-  }
-
-  return null;
+  var norm = raw.replace(/\.\d+Z?$/, '').replace(/Z$/, '').replace('T', ' ').replace(/-/g, '/');
+  var dd = new Date(norm);
+  return isNaN(dd.getTime()) ? null : dd;
 }
 
 function getWindowMetrics() {
   try {
-    const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-    const safeAreaBottom = info.safeArea && info.screenHeight
-      ? Math.max(info.screenHeight - info.safeArea.bottom, 0)
-      : 0;
-
-    return {
-      windowHeight: info.windowHeight || 0,
-      windowWidth: info.windowWidth || 375,
-      safeAreaBottom
-    };
-  } catch (err) {
-    return {
-      windowHeight: 0,
-      windowWidth: 375,
-      safeAreaBottom: 0
-    };
+    var info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    var sab = info.safeArea && info.screenHeight ? Math.max(info.screenHeight - info.safeArea.bottom, 0) : 0;
+    return { windowHeight: info.windowHeight || 0, windowWidth: info.windowWidth || 375, safeAreaBottom: sab };
+  } catch (e) {
+    return { windowHeight: 0, windowWidth: 375, safeAreaBottom: 0 };
   }
 }
 
-function rpxToPx(rpx, windowWidth) {
-  return Math.round((Number(rpx) || 0) * (windowWidth || 375) / 750);
-}
+function rpxToPx(rpx, w) { return Math.round((Number(rpx) || 0) * (w || 375) / 750); }
 
-function getWeekLabel(date) {
-  return ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][date.getDay()];
+var WEEK = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+function getMeridiem(h) {
+  if (h < 6) return '凌晨'; if (h < 12) return '上午'; if (h < 18) return '下午'; return '晚上';
 }
-
-function getMeridiemLabel(hour) {
-  if (hour < 6) return '凌晨';
-  if (hour < 12) return '上午';
-  if (hour < 18) return '下午';
-  return '晚上';
+function formatClock(date) {
+  var h = date.getHours(), dh = h % 12 === 0 ? 12 : h % 12;
+  return dh + ':' + pad2(date.getMinutes());
 }
 
 Page({
   data: {
-    otherUserId: '',
-    otherNickname: '',
-    otherAvatarUrl: '',
-    otherAvatarText: '对',
-    messages: [],
-    renderMessages: [],
-    inputValue: '',
-    page: 1,
-    hasMore: true,
-    loading: false,
-    myUserId: '',
-    scrollIntoView: '',
-    keyboardHeight: 0,
-    inputFocus: false,
-    windowHeight: 0,
-    safeAreaBottom: 0,
-    inputBarHeight: 0,
-    messageListHeight: 0
+    otherUserId: '', otherNickname: '', otherAvatarUrl: '', otherAvatarText: '对',
+    messages: [], renderMessages: [], inputValue: '',
+    page: 1, hasMore: true, loading: false,
+    myUserId: '', myAvatarUrl: '',
+    scrollIntoView: '', keyboardHeight: 0, inputFocus: false,
+    windowHeight: 0, safeAreaBottom: 0, inputBarHeight: 0, messageListHeight: 0
   },
 
   onLoad(options) {
     if (!checkLogin()) return;
-
-    const otherUserId = options.userId ? String(options.userId) : '';
+    var otherUserId = options.userId ? String(options.userId) : '';
     if (!otherUserId) {
       wx.showToast({ title: '会话信息无效', icon: 'none' });
-      setTimeout(() => {
-        wx.navigateBack({ delta: 1 });
-      }, 500);
+      setTimeout(function() { wx.navigateBack({ delta: 1 }); }, 500);
       return;
     }
-
-    const userInfo = app.globalData.userInfo || {};
-    const metrics = getWindowMetrics();
-    const inputBarHeight = rpxToPx(112, metrics.windowWidth);
-    const otherNickname = safeDecode(options.nickname || '');
-    const otherAvatarUrl = safeDecode(options.avatarUrl || '');
-    const otherAvatarText = otherNickname ? otherNickname.charAt(0) : '对';
+    var userInfo = app.globalData.userInfo || {};
+    var metrics = getWindowMetrics();
+    var inputBarHeight = rpxToPx(112, metrics.windowWidth);
+    var otherNickname = safeDecode(options.nickname || '');
+    var otherAvatarUrl = safeDecode(options.avatarUrl || '');
 
     this._pollTimer = null;
     this._pageVisible = false;
     this._syncingLatest = false;
+    this._wsHandler = null;
+    // temp id -> real id 映射，用于轮询去重
+    this._tempToRealId = {};
 
     this.setData({
-      otherUserId,
-      otherNickname,
-      otherAvatarUrl,
-      otherAvatarText,
+      otherUserId: otherUserId,
+      otherNickname: otherNickname,
+      otherAvatarUrl: otherAvatarUrl,
+      otherAvatarText: otherNickname ? otherNickname.charAt(0) : '对',
       myUserId: String(userInfo.userId || ''),
+      myAvatarUrl: userInfo.avatarUrl || '',
       windowHeight: metrics.windowHeight,
       safeAreaBottom: metrics.safeAreaBottom,
-      inputBarHeight,
-      messageListHeight: this._calcMessageListHeight({
-        windowHeight: metrics.windowHeight,
-        keyboardHeight: 0,
-        inputBarHeight,
-        safeAreaBottom: metrics.safeAreaBottom
-      })
+      inputBarHeight: inputBarHeight,
+      messageListHeight: this._calcListHeight(metrics.windowHeight, 0, inputBarHeight, metrics.safeAreaBottom)
     });
-
     wx.setNavigationBarTitle({ title: otherNickname || DEFAULT_TITLE });
     this.loadHistory(true);
   },
@@ -160,436 +109,367 @@ Page({
   onShow() {
     this._pageVisible = true;
     this.markRead();
-    this.startAutoSync();
-    if (this.data.messages.length) {
-      this.syncLatestMessages({ silent: true });
-    }
+    this._registerWs();
+    this._startPoll();
+    if (this.data.messages.length) this.syncLatest();
+  },
+  onHide() { this._pageVisible = false; this._unregisterWs(); this._stopPoll(); },
+  onUnload() { this._pageVisible = false; this._unregisterWs(); this._stopPoll(); },
+
+  // ========== WebSocket ==========
+  _registerWs() {
+    if (this._wsHandler) return;
+    var self = this;
+    this._wsHandler = function(msgData) {
+      if (!self._pageVisible || !msgData) return;
+      var fromId = String(msgData.fromUserId || '');
+      var toId = String(msgData.toUserId || '');
+      var myId = self.data.myUserId;
+      var otherId = self.data.otherUserId;
+      if (!((fromId === otherId && toId === myId) || (fromId === myId && toId === otherId))) return;
+
+      var formatted = self._fmtMsg(msgData);
+      var msgs = self.data.messages;
+      var realId = String(formatted.id);
+
+      // 去重：检查是否已存在
+      for (var i = msgs.length - 1; i >= 0; i--) {
+        if (String(msgs[i].id) === realId) return; // 已存在，跳过
+      }
+
+      // 检查是否能替换 temp 消息
+      var tempIdx = self._findTempMatch(msgs, formatted);
+      if (tempIdx >= 0) {
+        var updated = msgs.slice();
+        // 替换 temp，保留本地时间
+        updated[tempIdx] = Object.assign({}, updated[tempIdx], { id: realId, sending: false, sendFail: false });
+        self._tempToRealId[msgs[tempIdx].id] = realId;
+        self._render(updated, true);
+      } else {
+        // 新消息追加到末尾
+        self._render(msgs.concat([formatted]), true);
+      }
+
+      if (fromId === otherId) self.markRead();
+    };
+    ws.on('new_message', this._wsHandler);
+  },
+  _unregisterWs() {
+    if (this._wsHandler) { ws.off('new_message', this._wsHandler); this._wsHandler = null; }
   },
 
-  onHide() {
-    this._pageVisible = false;
-    this.stopAutoSync();
-  },
-
-  onUnload() {
-    this._pageVisible = false;
-    this.stopAutoSync();
-  },
-
-  startAutoSync() {
+  // ========== 降级轮询 ==========
+  _startPoll() {
     if (this._pollTimer || !this.data.otherUserId) return;
-    this._pollTimer = setInterval(() => {
-      if (!this._pageVisible || this.data.loading || this._syncingLatest) return;
-      this.syncLatestMessages({ silent: true });
-    }, POLL_INTERVAL);
+    var self = this;
+    this._pollTimer = setInterval(function() {
+      if (!self._pageVisible || self.data.loading || self._syncingLatest) return;
+      if (ws.getConnected()) return;
+      self.syncLatest();
+    }, FALLBACK_POLL_INTERVAL);
+  },
+  _stopPoll() {
+    if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
   },
 
-  stopAutoSync() {
-    if (this._pollTimer) {
-      clearInterval(this._pollTimer);
-      this._pollTimer = null;
-    }
-  },
-
+  // ========== 加载历史 ==========
   loadHistory(refresh) {
     if (this.data.loading) return;
     if (!refresh && !this.data.hasMore) return;
-
-    const page = refresh ? 1 : this.data.page;
-    const anchorMessageId = !refresh && this.data.messages.length ? this.data.messages[0].id : '';
-
+    var page = refresh ? 1 : this.data.page;
+    var anchorId = !refresh && this.data.messages.length ? this.data.messages[0].id : '';
     this.setData({ loading: true });
-
+    var self = this;
     request('/message/history', 'GET', {
-      otherUserId: this.data.otherUserId,
-      page: page,
-      size: PAGE_SIZE
-    }).then(res => {
-      const incoming = this._normalizeMessageList((res.data || []).reverse());
-      const merged = refresh
-        ? this._mergeMessages([], incoming)
-        : this._mergeMessages(incoming, this.data.messages);
-
-      this._applyMessages(merged, {
-        loading: false,
-        page: page + 1,
-        hasMore: incoming.length >= PAGE_SIZE,
-        anchorMessageId: refresh ? '' : anchorMessageId,
-        scrollToBottom: refresh
+      otherUserId: this.data.otherUserId, page: page, size: PAGE_SIZE
+    }).then(function(res) {
+      var incoming = (res.data || []).reverse().map(function(m) { return self._fmtMsg(m); });
+      var merged = refresh ? incoming : self._merge(incoming, self.data.messages);
+      self._render(merged, refresh, {
+        loading: false, page: page + 1, hasMore: incoming.length >= PAGE_SIZE,
+        anchorId: refresh ? '' : anchorId
       });
-
-      if (refresh) {
-        this.markRead();
-      }
-    }).catch(() => {
-      this.setData({ loading: false });
-    });
+      if (refresh) self.markRead();
+    }).catch(function() { self.setData({ loading: false }); });
   },
 
-  syncLatestMessages(options) {
+  // ========== 同步最新 ==========
+  syncLatest() {
     if (!this.data.otherUserId || this._syncingLatest) return;
-
-    const opts = options || {};
-    const previousTailId = this.data.messages.length ? this.data.messages[this.data.messages.length - 1].id : '';
     this._syncingLatest = true;
+    var self = this;
+    var prevTailId = this.data.messages.length ? this.data.messages[this.data.messages.length - 1].id : '';
 
     request('/message/history', 'GET', {
-      otherUserId: this.data.otherUserId,
-      page: 1,
-      size: PAGE_SIZE
-    }).then(res => {
-      const latest = this._normalizeMessageList((res.data || []).reverse());
-      const merged = this._mergeMessages(this.data.messages, latest);
-      const nextTailId = merged.length ? merged[merged.length - 1].id : '';
-      const hasNewTail = nextTailId && nextTailId !== previousTailId;
-      const hasIncomingUnread = latest.some(item => !item.isMine && Number(item.readStatus) !== 1);
-
-      this._applyMessages(merged, {
-        scrollToBottom: opts.scrollToBottom || hasNewTail
-      });
-
-      if (hasIncomingUnread) {
-        this.markRead();
+      otherUserId: this.data.otherUserId, page: 1, size: PAGE_SIZE
+    }).then(function(res) {
+      var latest = (res.data || []).reverse().map(function(m) { return self._fmtMsg(m); });
+      var merged = self._merge(self.data.messages, latest);
+      var newTailId = merged.length ? merged[merged.length - 1].id : '';
+      var hasNew = newTailId && newTailId !== prevTailId;
+      self._render(merged, hasNew);
+      if (latest.some(function(m) { return !m.isMine && Number(m.readStatus) !== 1; })) {
+        self.markRead();
       }
-    }).catch(() => {
-      if (!opts.silent) {
-        wx.showToast({ title: '同步失败', icon: 'none' });
-      }
-    }).finally(() => {
-      this._syncingLatest = false;
-    });
+    }).catch(function() {}).finally(function() { self._syncingLatest = false; });
   },
 
-  _normalizeMessageList(list) {
-    return (list || []).map(item => this._formatMsg(item));
-  },
-
-  _formatMsg(m) {
-    const msg = Object.assign({}, m);
-    const messageTime = parseDateTime(msg.createTime) || new Date();
-
-    msg.id = msg.id === undefined || msg.id === null ? 'msg_' + Date.now() : String(msg.id);
-    msg.content = msg.content === undefined || msg.content === null ? '' : String(msg.content);
-    msg.fromUserId = msg.fromUserId === undefined || msg.fromUserId === null ? '' : String(msg.fromUserId);
-    msg.toUserId = msg.toUserId === undefined || msg.toUserId === null ? '' : String(msg.toUserId);
+  // ========== 核心：格式化消息 ==========
+  _fmtMsg(m) {
+    var msg = Object.assign({}, m);
+    var t = parseDateTime(msg.createTime) || new Date();
+    msg.id = msg.id == null ? 'msg_' + Date.now() : String(msg.id);
+    msg.content = msg.content == null ? '' : String(msg.content);
+    msg.fromUserId = msg.fromUserId == null ? '' : String(msg.fromUserId);
+    msg.toUserId = msg.toUserId == null ? '' : String(msg.toUserId);
     msg.fromAvatarUrl = msg.fromAvatarUrl || '';
     msg.isMine = msg.fromUserId === this.data.myUserId;
-    msg.createTime = messageTime.toISOString();
-    msg.timestamp = messageTime.getTime();
+    msg.timestamp = t.getTime();
     msg.sending = !!msg.sending;
     msg.sendFail = !!msg.sendFail;
     return msg;
   },
 
-  _mergeMessages(baseMessages, incomingMessages) {
-    const result = (baseMessages || []).map(item => Object.assign({}, item));
-    const incoming = incomingMessages || [];
+  // ========== 核心：合并消息（简单可靠） ==========
+  _merge(base, incoming) {
+    // 用 id 做去重，同时处理 temp->real 映射
+    var map = {};
+    var result = [];
+    var realIds = this._tempToRealId || {};
 
-    for (let i = 0; i < incoming.length; i += 1) {
-      const next = Object.assign({}, incoming[i]);
-      let merged = false;
-
-      for (let j = 0; j < result.length; j += 1) {
-        if (String(result[j].id) === String(next.id)) {
-          result[j] = Object.assign({}, result[j], next, {
-            sending: false,
-            sendFail: false
-          });
-          merged = true;
-          break;
-        }
-      }
-
-      if (merged) continue;
-
-      for (let k = 0; k < result.length; k += 1) {
-        if (this._canReplaceTempMessage(result[k], next)) {
-          result[k] = Object.assign({}, result[k], next, {
-            sending: false,
-            sendFail: false
-          });
-          merged = true;
-          break;
-        }
-      }
-
-      if (!merged) {
-        result.push(next);
-      }
+    // 先放 base
+    for (var i = 0; i < base.length; i++) {
+      var b = Object.assign({}, base[i]);
+      map[String(b.id)] = true;
+      result.push(b);
     }
 
-    result.sort((a, b) => {
-      const diff = (a.timestamp || 0) - (b.timestamp || 0);
-      if (diff !== 0) return diff;
-      return String(a.id).localeCompare(String(b.id));
-    });
+    // 再放 incoming，跳过已存在的
+    for (var j = 0; j < incoming.length; j++) {
+      var inc = Object.assign({}, incoming[j]);
+      var incId = String(inc.id);
+      // 已存在（精确 id 匹配）
+      if (map[incId]) {
+        // 更新非时间字段（保留本地时间）
+        for (var k = 0; k < result.length; k++) {
+          if (String(result[k].id) === incId) {
+            result[k].readStatus = inc.readStatus;
+            result[k].sending = false;
+            result[k].sendFail = false;
+            break;
+          }
+        }
+        continue;
+      }
+      // 检查是否是 temp 消息对应的真实消息
+      var isTempReal = false;
+      for (var tid in realIds) {
+        if (realIds[tid] === incId) { isTempReal = true; break; }
+      }
+      if (isTempReal) continue; // 已经通过 temp 替换过了
 
+      // 检查是否能替换某个 temp 消息
+      var tempIdx = this._findTempMatch(result, inc);
+      if (tempIdx >= 0) {
+        realIds[result[tempIdx].id] = incId;
+        result[tempIdx] = Object.assign({}, result[tempIdx], { id: incId, sending: false, sendFail: false });
+        map[incId] = true;
+        continue;
+      }
+
+      // 全新消息
+      map[incId] = true;
+      result.push(inc);
+    }
+
+    // 按时间排序
+    result.sort(function(a, b) {
+      var diff = (a.timestamp || 0) - (b.timestamp || 0);
+      return diff !== 0 ? diff : String(a.id).localeCompare(String(b.id));
+    });
     return result;
   },
 
-  _canReplaceTempMessage(current, incoming) {
-    if (!current || !incoming) return false;
-    if (String(current.id).indexOf('temp_') !== 0) return false;
-    if (String(incoming.id).indexOf('temp_') === 0) return false;
-    if (current.content !== incoming.content) return false;
-    if (String(current.fromUserId) !== String(incoming.fromUserId)) return false;
-    if (String(current.toUserId) !== String(incoming.toUserId)) return false;
-    return Math.abs((current.timestamp || 0) - (incoming.timestamp || 0)) <= TEMP_MERGE_GAP;
+  _findTempMatch(msgs, incoming) {
+    if (String(incoming.id).indexOf('temp_') === 0) return -1;
+    for (var i = msgs.length - 1; i >= 0; i--) {
+      var m = msgs[i];
+      if (String(m.id).indexOf('temp_') !== 0) continue;
+      if (m.content === incoming.content &&
+          String(m.fromUserId) === String(incoming.fromUserId) &&
+          String(m.toUserId) === String(incoming.toUserId)) {
+        return i;
+      }
+    }
+    return -1;
   },
 
-  _buildRenderMessages(messages) {
-    const list = [];
-    let prev = null;
-
-    for (let i = 0; i < messages.length; i += 1) {
-      const item = messages[i];
-      if (this._shouldShowTimeDivider(prev, item)) {
-        list.push({
-          type: 'time',
-          renderKey: 'time_' + item.id,
-          label: this._formatTimeDivider(item.timestamp)
-        });
+  // ========== 渲染 ==========
+  _render(messages, scrollToBottom, extra) {
+    var list = [];
+    var prev = null;
+    for (var i = 0; i < messages.length; i++) {
+      var item = messages[i];
+      if (this._needTimeDivider(prev, item)) {
+        list.push({ type: 'time', renderKey: 'time_' + i, label: this._fmtTime(item.timestamp) });
       }
-
-      list.push(Object.assign({}, item, {
-        type: 'message',
-        renderKey: 'msg_' + item.id,
-        messageId: item.id
-      }));
-
+      list.push(Object.assign({}, item, { type: 'message', renderKey: 'msg_' + item.id, messageId: item.id }));
       prev = item;
     }
-
-    return list;
+    var data = { messages: messages, renderMessages: list };
+    if (extra) {
+      if (extra.page !== undefined) data.page = extra.page;
+      if (extra.hasMore !== undefined) data.hasMore = extra.hasMore;
+      if (extra.loading !== undefined) data.loading = extra.loading;
+    }
+    var self = this;
+    this.setData(data, function() {
+      if (extra && extra.anchorId) {
+        self._scrollTo(extra.anchorId);
+      } else if (scrollToBottom) {
+        self._scrollEnd();
+      }
+    });
   },
 
-  _shouldShowTimeDivider(prev, current) {
-    if (!current || !current.timestamp) return false;
+  _needTimeDivider(prev, cur) {
+    if (!cur || !cur.timestamp) return false;
     if (!prev || !prev.timestamp) return true;
-    if (!this._isSameDay(prev.timestamp, current.timestamp)) return true;
-    return Math.abs(current.timestamp - prev.timestamp) >= TIME_SEPARATOR_GAP;
+    var a = new Date(prev.timestamp), b = new Date(cur.timestamp);
+    if (a.getFullYear() !== b.getFullYear() || a.getMonth() !== b.getMonth() || a.getDate() !== b.getDate()) return true;
+    return Math.abs(cur.timestamp - prev.timestamp) >= TIME_SEPARATOR_GAP;
   },
 
-  _formatTimeDivider(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const timeText = getMeridiemLabel(date.getHours()) + this._formatClock(date);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
-    const weekDiff = now.getDay() === 0 ? 6 : now.getDay() - 1;
-    const weekStart = todayStart - weekDiff * 24 * 60 * 60 * 1000;
-
-    if (timestamp >= todayStart) {
-      return timeText;
-    }
-
-    if (timestamp >= yesterdayStart) {
-      return '昨天 ' + timeText;
-    }
-
-    if (timestamp >= weekStart && date.getFullYear() === now.getFullYear()) {
-      return getWeekLabel(date) + ' ' + timeText;
-    }
-
-    if (date.getFullYear() === now.getFullYear()) {
-      return (date.getMonth() + 1) + '月' + date.getDate() + '日 ' + timeText;
-    }
-
-    return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日 ' + timeText;
+  _fmtTime(ts) {
+    var date = new Date(ts), now = new Date();
+    var timeText = getMeridiem(date.getHours()) + formatClock(date);
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    if (ts >= todayStart) return timeText;
+    if (ts >= todayStart - 86400000) return '昨天 ' + timeText;
+    var wd = now.getDay() === 0 ? 6 : now.getDay() - 1;
+    var weekStart = todayStart - wd * 86400000;
+    if (ts >= weekStart && date.getFullYear() === now.getFullYear()) return WEEK[date.getDay()] + ' ' + timeText;
+    if (date.getFullYear() === now.getFullYear()) return (date.getMonth()+1) + '月' + date.getDate() + '日 ' + timeText;
+    return date.getFullYear() + '年' + (date.getMonth()+1) + '月' + date.getDate() + '日 ' + timeText;
   },
 
-  _formatClock(date) {
-    const hours = date.getHours();
-    const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-    return displayHour + ':' + pad2(date.getMinutes());
+  _calcListHeight(wh, kh, ibh, sab) {
+    return Math.max((wh||this.data.windowHeight) - (kh===undefined?this.data.keyboardHeight:kh) - (ibh||this.data.inputBarHeight) - (sab===undefined?this.data.safeAreaBottom:sab), 240);
   },
 
-  _isSameDay(first, second) {
-    const a = new Date(first);
-    const b = new Date(second);
-    return a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate();
-  },
-
-  _applyMessages(messages, options) {
-    const opts = options || {};
-    const finalMessages = messages || [];
-    const data = {
-      messages: finalMessages,
-      renderMessages: this._buildRenderMessages(finalMessages)
-    };
-
-    if (opts.page !== undefined) data.page = opts.page;
-    if (opts.hasMore !== undefined) data.hasMore = opts.hasMore;
-    if (opts.loading !== undefined) data.loading = opts.loading;
-
-    this.setData(data, () => {
-      if (opts.anchorMessageId) {
-        this._scrollToMessage(opts.anchorMessageId);
-      } else if (opts.scrollToBottom) {
-        this._scrollToBottom();
-      }
-    });
-  },
-
-  _calcMessageListHeight(options) {
-    const windowHeight = options.windowHeight || this.data.windowHeight || 0;
-    const keyboardHeight = options.keyboardHeight === undefined ? this.data.keyboardHeight : options.keyboardHeight;
-    const inputBarHeight = options.inputBarHeight || this.data.inputBarHeight || 0;
-    const safeAreaBottom = options.safeAreaBottom === undefined ? this.data.safeAreaBottom : options.safeAreaBottom;
-    return Math.max(windowHeight - keyboardHeight - inputBarHeight - safeAreaBottom, 240);
-  },
-
-  _setKeyboardHeight(height) {
-    const keyboardHeight = Math.max(Number(height) || 0, 0);
-    this.setData({
-      keyboardHeight,
-      messageListHeight: this._calcMessageListHeight({ keyboardHeight })
-    }, () => {
-      if (keyboardHeight > 0) {
-        this._scrollToBottom();
-      }
-    });
-  },
-
-  _scrollToMessage(messageId) {
-    if (!messageId) return;
-    const targetId = 'msg-' + messageId;
+  _scrollTo(id) {
+    if (!id) return;
+    var target = 'msg-' + id;
     this.setData({ scrollIntoView: '' });
-    const updateTarget = () => {
-      this.setData({ scrollIntoView: targetId });
-    };
-
-    if (wx.nextTick) {
-      wx.nextTick(updateTarget);
-      return;
-    }
-
-    setTimeout(updateTarget, 60);
+    var self = this;
+    if (wx.nextTick) { wx.nextTick(function() { self.setData({ scrollIntoView: target }); }); }
+    else { setTimeout(function() { self.setData({ scrollIntoView: target }); }, 60); }
   },
-
-  _scrollToBottom() {
+  _scrollEnd() {
     if (!this.data.messages.length) return;
-    const last = this.data.messages[this.data.messages.length - 1];
-    this._scrollToMessage(last.id);
+    this._scrollTo(this.data.messages[this.data.messages.length - 1].id);
   },
 
   markRead() {
     if (this.data.otherUserId) {
-      request('/message/read?fromUserId=' + this.data.otherUserId, 'POST').catch(() => {});
+      request('/message/read?fromUserId=' + this.data.otherUserId, 'POST').catch(function(){});
     }
   },
 
-  onInputChange(e) {
-    this.setData({ inputValue: e.detail.value });
-  },
-
+  // ========== 输入和发送 ==========
+  onInputChange(e) { this.setData({ inputValue: e.detail.value }); },
   onInputFocus(e) {
     this.setData({ inputFocus: true });
-    if (e.detail && e.detail.height) {
-      this._setKeyboardHeight(e.detail.height);
-      return;
-    }
-    this._scrollToBottom();
+    if (e.detail && e.detail.height) { this._setKbHeight(e.detail.height); return; }
+    this._scrollEnd();
+  },
+  onInputBlur() { this.setData({ inputFocus: false }); this._setKbHeight(0); },
+  onKeyboardHeight(e) { this._setKbHeight(e.detail && e.detail.height); },
+  _setKbHeight(h) {
+    var kh = Math.max(Number(h) || 0, 0);
+    var self = this;
+    this.setData({ keyboardHeight: kh, messageListHeight: this._calcListHeight(undefined, kh) }, function() {
+      if (kh > 0) self._scrollEnd();
+    });
   },
 
-  onInputBlur() {
-    this.setData({ inputFocus: false });
-    this._setKeyboardHeight(0);
-  },
+  onSend() { this._doSend(this.data.inputValue); },
 
-  onKeyboardHeight(e) {
-    this._setKeyboardHeight(e.detail && e.detail.height);
-  },
-
-  onSend() {
-    this._sendMessage(this.data.inputValue);
-  },
-
-  _sendMessage(rawContent) {
-    const content = (rawContent || '').trim();
+  _doSend(rawContent) {
+    var content = (rawContent || '').trim();
     if (!content || !this.data.otherUserId) return;
 
-    const userInfo = app.globalData.userInfo || {};
-    const now = new Date();
-    const tempMsg = this._formatMsg({
-      id: 'temp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    var userInfo = app.globalData.userInfo || {};
+    var now = new Date();
+    var tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    var tempMsg = this._fmtMsg({
+      id: tempId,
       fromUserId: String(userInfo.userId || ''),
       toUserId: this.data.otherUserId,
-      content: content,
-      msgType: 'text',
-      readStatus: 0,
-      createTime: now.toISOString(),
+      content: content, msgType: 'text', readStatus: 0,
+      createTime: Date.now(),
       fromNickname: userInfo.nickname || '我',
       fromAvatarUrl: userInfo.avatarUrl || '',
-      sending: true
+      sending: false
     });
 
     this.setData({ inputValue: '' });
-    this._applyMessages(this._mergeMessages(this.data.messages, [tempMsg]), {
-      scrollToBottom: true
-    });
+    // 追加并渲染
+    this._render(this.data.messages.concat([tempMsg]), true);
 
+    var self = this;
     request('/message/send', 'POST', {
-      toUserId: Number(this.data.otherUserId),
-      content: content,
-      msgType: 'text'
-    }).then(res => {
-      const realMessage = this._formatMsg(res.data || {});
-      this._applyMessages(this._mergeMessages(this.data.messages, [realMessage]), {
-        scrollToBottom: true
-      });
-    }).catch(() => {
-      const messages = this.data.messages.map(item => {
-        if (item.id === tempMsg.id) {
-          return Object.assign({}, item, {
-            sending: false,
-            sendFail: true
-          });
+      toUserId: this.data.otherUserId, content: content, msgType: 'text'
+    }).then(function(res) {
+      var real = self._fmtMsg(res.data || {});
+      var realId = String(real.id);
+      // 记录映射
+      self._tempToRealId[tempId] = realId;
+      // 替换 temp id，保留本地时间
+      var msgs = self.data.messages.map(function(m) {
+        if (m.id === tempId) {
+          return Object.assign({}, m, { id: realId, sending: false, sendFail: false });
         }
-        return item;
+        return m;
       });
-      this._applyMessages(messages);
+      self._render(msgs, false);
+    }).catch(function() {
+      var msgs = self.data.messages.map(function(m) {
+        if (m.id === tempId) return Object.assign({}, m, { sending: false, sendFail: true });
+        return m;
+      });
+      self._render(msgs, false);
       wx.showToast({ title: '发送失败', icon: 'none' });
     });
   },
 
   onScrollToUpper() {
-    if (this.data.hasMore && !this.data.loading) {
-      this.loadHistory(false);
-    }
+    if (this.data.hasMore && !this.data.loading) this.loadHistory(false);
   },
 
   onResend(e) {
-    const messageId = e.currentTarget.dataset.id;
-    const msg = this.data.messages.find(item => item.id === messageId);
+    var id = e.currentTarget.dataset.id;
+    var msg = this.data.messages.find(function(m) { return m.id === id; });
     if (!msg) return;
-
-    const nextMessages = this.data.messages.filter(item => item.id !== messageId);
-    this._applyMessages(nextMessages, {
-      scrollToBottom: true
-    });
-    this._sendMessage(msg.content);
+    this._render(this.data.messages.filter(function(m) { return m.id !== id; }), true);
+    this._doSend(msg.content);
   },
 
   onMessageLongPress(e) {
-    const messageId = e.currentTarget.dataset.id;
-    const isMine = e.currentTarget.dataset.isMine;
+    var messageId = e.currentTarget.dataset.id;
+    var isMine = e.currentTarget.dataset.isMine;
     if (isMine) return;
-
     wx.showActionSheet({
       itemList: ['举报此消息'],
-      success: () => {
-        const reasons = ['色情低俗', '违法违规', '侵权', '虚假信息', '人身攻击', '其他'];
+      success: function() {
+        var reasons = ['色情低俗','违法违规','侵权','虚假信息','人身攻击','其他'];
         wx.showActionSheet({
           itemList: reasons,
-          success: (res) => {
-            const reason = reasons[res.tapIndex];
+          success: function(res) {
             request('/report/submit?targetType=message&targetId=' + messageId
-              + '&reason=' + encodeURIComponent(reason), 'POST')
-              .then(() => { wx.showToast({ title: '举报已提交', icon: 'success' }); })
-              .catch((err) => { wx.showToast({ title: (err && err.message) || '举报失败', icon: 'none' }); });
+              + '&reason=' + encodeURIComponent(reasons[res.tapIndex]), 'POST')
+              .then(function() { wx.showToast({ title: '举报已提交', icon: 'success' }); })
+              .catch(function(err) { wx.showToast({ title: (err && err.message) || '举报失败', icon: 'none' }); });
           }
         });
       }

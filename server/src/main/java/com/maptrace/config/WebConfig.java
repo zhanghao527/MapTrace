@@ -61,6 +61,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/photo/user/**",
                         "/api/comment/list",
                         "/api/comment/replies",
+                        "/ws/**",
                         "/doc.html",
                         "/webjars/**",
                         "/v3/api-docs/**",

@@ -1,10 +1,13 @@
 package com.maptrace.model.vo;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
 public class UserInfoVO {
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long userId;
     private String nickname;
     private String avatarUrl;

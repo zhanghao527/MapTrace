@@ -91,7 +91,7 @@ Page({
               ? '/admin/report/appeal/resolve'
               : '/admin/report/appeal/reject';
             request(url, 'POST', {
-              appealId: Number(item.id),
+              appealId: item.id,
               handleResult: text || '已处理'
             }).then(() => {
               wx.showToast({ title: '操作成功', icon: 'success' });

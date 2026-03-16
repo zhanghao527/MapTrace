@@ -121,14 +121,14 @@ Page({
           const pIdx = this.data.punishmentIndex;
           const pType = PUNISHMENT_OPTIONS[pIdx] ? PUNISHMENT_OPTIONS[pIdx].key : '';
           body = {
-            reportId: Number(this.data.id),
+            reportId: this.data.id,
             action: 'REMOVE_CONTENT',
             handleResult: text,
             punishmentType: pType || null,
             punishmentDays: pType && pType !== 'warning' ? Number(this.data.punishmentDays) || 7 : 0
           };
         } else {
-          body = { reportId: Number(this.data.id), handleResult: text };
+          body = { reportId: this.data.id, handleResult: text };
         }
 
         request(url, 'POST', body)
@@ -169,8 +169,8 @@ Page({
           success: (mr) => {
             if (!mr.confirm) return;
             request('/admin/report/punish', 'POST', {
-              userId: Number(detail.targetOwnerUserId),
-              reportId: Number(this.data.id),
+              userId: detail.targetOwnerUserId,
+              reportId: this.data.id,
               punishmentType: cfg.type,
               punishmentDays: cfg.days,
               reason: detail.reason || '违反社区规范'

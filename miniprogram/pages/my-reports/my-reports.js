@@ -90,7 +90,7 @@ Page({
     }
     request('/report/appeal', 'POST', {
       type: 'report_rejected',
-      reportId: Number(this.data._appealReportId),
+      reportId: this.data._appealReportId,
       reason: reason
     }).then(() => {
       this.setData({ showAppealDialog: false });

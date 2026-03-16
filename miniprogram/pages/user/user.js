@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const { request, checkLogin } = require('../../utils/request');
+const app = getApp();
 
 function normalizeTopAreas(areas) {
   return (areas || []).map(item => ({
@@ -15,7 +16,8 @@ Page({
     total: 0,
     page: 1,
     hasMore: true,
-    loading: false
+    loading: false,
+    isMe: false
   },
 
   onLoad(options) {
@@ -23,6 +25,9 @@ Page({
     if (options.nickname) {
       wx.setNavigationBarTitle({ title: decodeURIComponent(options.nickname) });
     }
+    // 判断是否是自己
+    const myId = app.globalData.userInfo && app.globalData.userInfo.userId;
+    this.setData({ isMe: myId && String(myId) === String(this._userId) });
     this.loadUserPhotos(true);
   },
 
@@ -62,5 +67,15 @@ Page({
   onPhotoTap(e) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: '/pages/detail/detail?id=' + id });
+  },
+
+  onSendMessage() {
+    if (!checkLogin()) return;
+    const user = this.data.user || {};
+    wx.navigateTo({
+      url: '/pages/chat/chat?userId=' + this._userId +
+        '&nickname=' + encodeURIComponent(user.nickname || '') +
+        '&avatarUrl=' + encodeURIComponent(user.avatarUrl || '')
+    });
   }
 });

@@ -41,9 +41,12 @@ public class MessageController {
     public Result<MessageVO> send(
             @RequestBody SendMessageRequest req,
             @RequestAttribute("userId") Long userId) {
-        userService.checkMuted(userId);
+        ThrowUtils.throwIf(req.getToUserId() == null, ErrorCode.PARAMS_ERROR, "接收者不能为空");
+        ThrowUtils.throwIf(req.getToUserId().equals(userId), ErrorCode.PARAMS_ERROR, "不能给自己发私信");
         ThrowUtils.throwIf(req.getContent() == null || req.getContent().trim().isEmpty(),
                 ErrorCode.PARAMS_ERROR, "消息内容不能为空");
+        userService.checkMuted(userId);
+        userService.checkBanned(userId);
         return Result.success(messageService.sendMessage(req, userId));
     }
 

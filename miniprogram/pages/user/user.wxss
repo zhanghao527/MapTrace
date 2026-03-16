@@ -135,3 +135,29 @@
 
 .empty-tip { text-align: center; color: #ccc; font-size: 28rpx; padding: 80rpx 0; }
 .loading-tip { text-align: center; color: #bbb; font-size: 24rpx; padding: 30rpx 0; }
+
+/* 发私信按钮 */
+.msg-btn-wrap {
+  padding: 0 24rpx 16rpx;
+}
+.msg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80rpx;
+  background: #fff;
+  border: 2rpx solid #07c160;
+  border-radius: 40rpx;
+  gap: 10rpx;
+}
+.msg-btn:active {
+  background: rgba(7, 193, 96, 0.08);
+}
+.msg-btn-icon {
+  font-size: 32rpx;
+}
+.msg-btn-text {
+  font-size: 28rpx;
+  color: #07c160;
+  font-weight: 500;
+}

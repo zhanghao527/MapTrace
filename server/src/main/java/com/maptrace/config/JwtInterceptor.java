@@ -2,6 +2,8 @@ package com.maptrace.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maptrace.common.Result;
+import com.maptrace.model.entity.User;
+import com.maptrace.mapper.UserMapper;
 import com.maptrace.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,15 +17,14 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
+    private final UserMapper userMapper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // OPTIONS 预检请求放行
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
-        // 已被 AdminWebAuthInterceptor 认证的 Web 管理端请求，直接放行
         if (Boolean.TRUE.equals(request.getAttribute("isWebAdmin"))) {
             return true;
         }
@@ -40,8 +41,15 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 将 userId 存入 request，供 Controller 使用
         Long userId = jwtUtil.getUserIdFromToken(token);
+
+        // 校验用户是否存在，不存在则返回40100让前端清除token重新登录
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            writeUnauthorized(response, "用户不存在，请重新登录");
+            return false;
+        }
+
         request.setAttribute("userId", userId);
         return true;
     }
@@ -49,6 +57,7 @@ public class JwtInterceptor implements HandlerInterceptor {
     private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
         response.setStatus(200);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(Result.error(com.maptrace.common.ErrorCode.NOT_LOGIN_ERROR, message)));
+        response.getWriter().write(objectMapper.writeValueAsString(
+                Result.error(com.maptrace.common.ErrorCode.NOT_LOGIN_ERROR, message)));
     }
 }

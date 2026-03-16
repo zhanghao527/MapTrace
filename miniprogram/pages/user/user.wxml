@@ -31,6 +31,14 @@
     </view>
   </view>
 
+  <!-- 发私信按钮（不展示给自己） -->
+  <view class="msg-btn-wrap" wx:if="{{!isMe}}">
+    <view class="msg-btn" bindtap="onSendMessage">
+      <text class="msg-btn-icon">💬</text>
+      <text class="msg-btn-text">发私信</text>
+    </view>
+  </view>
+
   <view class="area-card" wx:if="{{topAreas.length}}">
     <view class="section-head">
       <text class="section-title">足迹亮点</text>

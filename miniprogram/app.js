@@ -19,6 +19,9 @@ App({
       this.globalData.userInfo = wx.getStorageSync('userInfo') || null;
       this.globalData.needPhone = !!authState.needPhone;
       this.globalData.needProfile = !!authState.needProfile;
+      // 已登录，自动连接 WebSocket
+      const ws = require('./utils/websocket');
+      ws.connect();
     }
   },
 
@@ -64,6 +67,9 @@ App({
                 wx.setStorageSync('token', d.token);
                 this.setAuthState({ needPhone: d.needPhone, needProfile: d.needProfile });
                 this.setUserInfo({ userId: d.userId });
+                // 登录成功，连接 WebSocket
+                const ws = require('./utils/websocket');
+                ws.connect();
                 resolve(d);
               } else {
                 reject(new Error((resp.data && resp.data.message) || '登录失败'));
@@ -106,6 +112,9 @@ App({
   },
 
   logout() {
+    // 断开 WebSocket
+    const ws = require('./utils/websocket');
+    ws.disconnect();
     this.globalData.token = '';
     this.globalData.userInfo = null;
     this.globalData.needPhone = false;

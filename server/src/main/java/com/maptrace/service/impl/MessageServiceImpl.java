@@ -2,6 +2,7 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maptrace.mapper.MessageMapper;
 import com.maptrace.mapper.UserMapper;
 import com.maptrace.model.vo.ConversationVO;
@@ -11,12 +12,18 @@ import com.maptrace.model.entity.Message;
 import com.maptrace.model.entity.User;
 import com.maptrace.monitor.BusinessMetricsCollector;
 import com.maptrace.service.MessageService;
+import com.maptrace.websocket.WebSocketSessionManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
@@ -24,6 +31,8 @@ public class MessageServiceImpl implements MessageService {
     private final MessageMapper messageMapper;
     private final UserMapper userMapper;
     private final BusinessMetricsCollector metricsCollector;
+    private final WebSocketSessionManager sessionManager;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<ConversationVO> getConversations(Long userId) {
@@ -54,10 +63,14 @@ public class MessageServiceImpl implements MessageService {
         msg.setReadStatus(0);
         messageMapper.insert(msg);
 
-        // 监控埋点
         metricsCollector.recordMessage(String.valueOf(userId));
 
-        return toResponse(msg);
+        MessageVO vo = toResponse(msg);
+
+        // 异步推送，不阻塞 HTTP 响应
+        asyncPushToUser(req.getToUserId(), vo);
+
+        return vo;
     }
 
     @Override
@@ -72,6 +85,27 @@ public class MessageServiceImpl implements MessageService {
                 .eq(Message::getReadStatus, 0)));
     }
 
+    /**
+     * 异步通过 WebSocket 推送新消息给目标用户
+     */
+    private void asyncPushToUser(Long toUserId, MessageVO messageVO) {
+        // 直接在新线程推送，避免阻塞 HTTP 响应
+        new Thread(() -> {
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "new_message");
+                payload.put("data", messageVO);
+                String json = objectMapper.writeValueAsString(payload);
+                boolean sent = sessionManager.sendToUser(toUserId, json);
+                if (!sent) {
+                    log.debug("用户 {} 不在线，WebSocket 推送跳过", toUserId);
+                }
+            } catch (Exception e) {
+                log.warn("WebSocket 推送异常: toUserId={}, error={}", toUserId, e.getMessage());
+            }
+        }).start();
+    }
+
     private MessageVO toResponse(Message m) {
         MessageVO r = new MessageVO();
         r.setId(m.getId());
@@ -80,7 +114,14 @@ public class MessageServiceImpl implements MessageService {
         r.setContent(m.getContent());
         r.setMsgType(m.getMsgType());
         r.setReadStatus(m.getReadStatus());
-        r.setCreateTime(m.getCreateTime() != null ? m.getCreateTime().toString() : "");
+        // 输出毫秒时间戳，前端不再有时区解析问题
+        if (m.getCreateTime() != null) {
+            long millis = m.getCreateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            r.setCreateTime(String.valueOf(millis));
+            log.debug("消息时间转换: id={}, localDateTime={}, zone={}, millis={}", m.getId(), m.getCreateTime(), ZoneId.systemDefault(), millis);
+        } else {
+            r.setCreateTime("");
+        }
 
         User from = userMapper.selectById(m.getFromUserId());
         if (from != null) {
