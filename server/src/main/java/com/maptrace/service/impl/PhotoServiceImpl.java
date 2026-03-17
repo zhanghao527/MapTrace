@@ -2,6 +2,8 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.maptrace.common.BusinessException;
+import com.maptrace.common.ErrorCode;
 import com.maptrace.mapper.PhotoLikeMapper;
 import com.maptrace.mapper.PhotoMapper;
 import com.maptrace.mapper.UserMapper;
@@ -67,9 +69,11 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
                     java.time.Duration.between(start, java.time.Instant.now()));
 
             return getDetail(photo.getId());
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("照片上传失败", e);
-            throw new RuntimeException("照片上传失败: " + e.getMessage());
+            throw new BusinessException(ErrorCode.PHOTO_UPLOAD_FAILED, "照片上传失败，请稍后重试");
         }
     }
 
@@ -241,8 +245,8 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
     @Transactional
     public void deletePhoto(Long photoId, Long userId) {
         Photo photo = this.getById(photoId);
-        if (photo == null) throw new RuntimeException("照片不存在");
-        if (!photo.getUserId().equals(userId)) throw new RuntimeException("无权删除");
+        if (photo == null) throw new BusinessException(ErrorCode.PHOTO_NOT_FOUND);
+        if (!photo.getUserId().equals(userId)) throw new BusinessException(ErrorCode.PHOTO_DELETE_FORBIDDEN);
         this.removeById(photoId);
         metricsCollector.recordPhotoDelete(String.valueOf(userId), "user");
     }

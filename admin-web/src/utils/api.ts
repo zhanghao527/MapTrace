@@ -10,7 +10,7 @@ export const getDashboardStats = () => request.get('/api/admin/dashboard/stats')
 
 // Reports
 export const getReports = (params: any) => request.get('/api/admin/report/list', { params });
-export const getReportDetail = (id: number) => request.get(`/api/admin/report/detail/${id}`);
+export const getReportDetail = (id: string) => request.get(`/api/admin/report/detail/${id}`);
 export const resolveReport = (data: any) => request.post('/api/admin/report/resolve', data);
 export const rejectReport = (data: any) => request.post('/api/admin/report/reject', data);
 export const batchResolveReports = (data: any) => request.post('/api/admin/report/batch-resolve', data);
@@ -20,7 +20,7 @@ export const getAggregatedReports = (params: any) => request.get('/api/admin/rep
 
 // Appeals
 export const getAppeals = (params: any) => request.get('/api/admin/report/appeals', { params });
-export const getAppealDetail = (id: number) => request.get(`/api/admin/report/appeal/${id}`);
+export const getAppealDetail = (id: string) => request.get(`/api/admin/report/appeal/${id}`);
 export const resolveAppeal = (data: any) => request.post('/api/admin/report/appeal/resolve', data);
 export const rejectAppeal = (data: any) => request.post('/api/admin/report/appeal/reject', data);
 
@@ -46,6 +46,6 @@ export const getLogs = (params: any) => request.get('/api/admin/report/logs', { 
 // Admin accounts
 export const getAdminAccounts = () => request.get('/api/admin/account/list');
 export const createAdminAccount = (data: any) => request.post('/api/admin/account/create', data);
-export const updateAdminAccount = (id: number, data: any) => request.put(`/api/admin/account/${id}`, data);
-export const resetAdminPassword = (id: number) => request.post(`/api/admin/account/${id}/reset-password`);
-export const toggleAdminAccount = (id: number) => request.post(`/api/admin/account/${id}/toggle`);
+export const updateAdminAccount = (id: string, data: any) => request.put(`/api/admin/account/${id}`, data);
+export const resetAdminPassword = (id: string) => request.post(`/api/admin/account/${id}/reset-password`);
+export const toggleAdminAccount = (id: string) => request.post(`/api/admin/account/${id}/toggle`);

@@ -12,7 +12,7 @@ export default function ReportDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ['report', id], queryFn: () => getReportDetail(Number(id)) });
+  const { data, isLoading } = useQuery({ queryKey: ['report', id], queryFn: () => getReportDetail(id!) });
   const report: any = data || {};
   const [handleResult, setHandleResult] = useState('');
   const [punishType, setPunishType] = useState<string>('');
@@ -25,7 +25,7 @@ export default function ReportDetail() {
     if (!handleResult.trim()) { message.error('请填写处理意见'); return; }
     setSubmitting(true);
     try {
-      await resolveReport({ reportId: Number(id), action: 'REMOVE_CONTENT', handleResult, punishmentType: punishType || undefined, punishmentDays: punishDays });
+      await resolveReport({ reportId: id!, action: 'REMOVE_CONTENT', handleResult, punishmentType: punishType || undefined, punishmentDays: punishDays });
       message.success('已采纳');
       qc.invalidateQueries({ queryKey: ['reports'] });
       navigate('/reports');
@@ -36,7 +36,7 @@ export default function ReportDetail() {
     if (!handleResult.trim()) { message.error('请填写驳回原因'); return; }
     setSubmitting(true);
     try {
-      await rejectReport({ reportId: Number(id), handleResult });
+      await rejectReport({ reportId: id!, handleResult });
       message.success('已驳回');
       qc.invalidateQueries({ queryKey: ['reports'] });
       navigate('/reports');

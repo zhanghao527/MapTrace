@@ -118,7 +118,6 @@ public class MessageServiceImpl implements MessageService {
         if (m.getCreateTime() != null) {
             long millis = m.getCreateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             r.setCreateTime(String.valueOf(millis));
-            log.debug("消息时间转换: id={}, localDateTime={}, zone={}, millis={}", m.getId(), m.getCreateTime(), ZoneId.systemDefault(), millis);
         } else {
             r.setCreateTime("");
         }

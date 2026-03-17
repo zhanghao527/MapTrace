@@ -2,12 +2,12 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.maptrace.mapper.AdminAccountMapper;
 import com.maptrace.mapper.AdminLogMapper;
-import com.maptrace.mapper.UserMapper;
 import com.maptrace.model.vo.AdminLogPageVO;
 import com.maptrace.model.vo.AdminLogVO;
+import com.maptrace.model.entity.AdminAccount;
 import com.maptrace.model.entity.AdminLog;
-import com.maptrace.model.entity.User;
 import com.maptrace.service.AdminLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class AdminLogServiceImpl implements AdminLogService {
 
     private final AdminLogMapper adminLogMapper;
-    private final UserMapper userMapper;
+    private final AdminAccountMapper adminAccountMapper;
 
     @Override
     public void log(Long adminUserId, String action, String targetType, Long targetId, String detail) {
@@ -55,7 +55,7 @@ public class AdminLogServiceImpl implements AdminLogService {
         r.setTargetId(log.getTargetId());
         r.setDetail(log.getDetail());
         r.setCreateTime(log.getCreateTime() != null ? log.getCreateTime().toString() : "");
-        User admin = userMapper.selectById(log.getAdminUserId());
+        AdminAccount admin = adminAccountMapper.selectById(log.getAdminUserId());
         if (admin != null) {
             r.setAdminNickname(admin.getNickname());
         }

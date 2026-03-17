@@ -32,11 +32,11 @@ management:
         include: health,info,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
 
-# Knife4j API 文档
+# Knife4j API 文档（各环境可覆盖此配置）
 knife4j:
-  enable: true
+  enable: ${KNIFE4J_ENABLE:true}
   openapi:
     title: 时光地图 API
     version: 1.0.0

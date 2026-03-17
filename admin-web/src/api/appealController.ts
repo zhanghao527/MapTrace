@@ -6,7 +6,7 @@ export const getAppeals = (params: Record<string, unknown>) =>
   request.get<unknown, AppealPageVO>('/api/admin/report/appeals', { params });
 
 /** 申诉详情 */
-export const getAppealDetail = (id: number) =>
+export const getAppealDetail = (id: string) =>
   request.get<unknown, AppealVO>(`/api/admin/report/appeal/${id}`);
 
 /** 采纳申诉 */

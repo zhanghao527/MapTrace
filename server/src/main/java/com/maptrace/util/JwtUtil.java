@@ -16,19 +16,20 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
+    @Value("${jwt.admin-secret:#{null}}")
+    private String adminSecret;
+
     @Value("${jwt.expiration}")
     private Long expiration;
-
-    private static final String ADMIN_JWT_SECRET_SUFFIX = "-admin-web-console";
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     private SecretKey getAdminSigningKey() {
-        String adminSecret = secret + ADMIN_JWT_SECRET_SUFFIX;
-        // Ensure at least 32 bytes for HMAC-SHA256
-        byte[] bytes = adminSecret.getBytes(StandardCharsets.UTF_8);
+        // 优先使用独立的 admin secret，未配置时回退到拼接方式
+        String key = (adminSecret != null && !adminSecret.isBlank()) ? adminSecret : secret + "-admin-web-console";
+        byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             byte[] padded = new byte[32];
             System.arraycopy(bytes, 0, padded, 0, bytes.length);

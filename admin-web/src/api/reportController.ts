@@ -10,7 +10,7 @@ export const getReports = (params: Record<string, unknown>) =>
   request.get<unknown, AdminReportPageVO>('/api/admin/report/list', { params });
 
 /** 举报详情 */
-export const getReportDetail = (id: number) =>
+export const getReportDetail = (id: string) =>
   request.get<unknown, AdminReportDetailVO>(`/api/admin/report/detail/${id}`);
 
 /** 采纳举报 */

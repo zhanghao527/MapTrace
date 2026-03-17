@@ -7,7 +7,7 @@ const request = axios.create({
 });
 
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token');
+  const token = sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers['X-Client-Type'] = 'web';
   return config;
@@ -19,6 +19,7 @@ request.interceptors.response.use(
     // 统一错误码：0 = 成功，40100 = 未登录
     if (data.code === 0) return data.data;
     if (data.code === 40100) {
+      sessionStorage.removeItem('admin_token');
       localStorage.removeItem('admin_token');
       window.location.hash = '#/login';
     }

@@ -10,8 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.maptrace.common.BusinessException;
+import com.maptrace.common.ErrorCode;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -65,17 +69,37 @@ public class CosService {
         }
     }
 
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif");
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif");
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
     /**
      * 上传文件到 COS，返回访问 URL
      */
     public String upload(MultipartFile file) {
+        // 文件校验
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "上传文件不能为空");
+        }
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new BusinessException(ErrorCode.PHOTO_SIZE_EXCEEDED, "文件大小不能超过20MB");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件类型，仅允许 JPG/PNG/GIF/WebP/HEIC");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String ext = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase()
+                : "";
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件扩展名，仅允许 jpg/png/gif/webp/heic");
+        }
+
         java.time.Instant start = java.time.Instant.now();
         try {
-            String originalFilename = file.getOriginalFilename();
-            String ext = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : ".png";
-
             String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             String key = "photos/" + datePath + "/" + UUID.randomUUID() + ext;
 
@@ -95,10 +119,12 @@ public class CosService {
                     java.time.Duration.between(start, java.time.Instant.now()));
 
             return url;
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("COS 上传失败", e);
             metricsCollector.recordCosOperation("upload", "error");
-            throw new RuntimeException("图片上传失败: " + e.getMessage());
+            throw new BusinessException(ErrorCode.PHOTO_UPLOAD_FAILED, "图片上传失败，请稍后重试");
         }
     }
 }

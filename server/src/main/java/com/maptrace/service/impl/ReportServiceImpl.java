@@ -2,6 +2,8 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.maptrace.common.BusinessException;
+import com.maptrace.common.ErrorCode;
 import com.maptrace.mapper.*;
 import com.maptrace.model.dto.*;
 import com.maptrace.model.vo.*;
@@ -32,6 +34,7 @@ public class ReportServiceImpl implements ReportService {
     private final UserMapper userMapper;
     private final MessageMapper messageMapper;
     private final UserViolationMapper userViolationMapper;
+    private final AdminAccountMapper adminAccountMapper;
     private final CommentService commentService;
     private final NotificationService notificationService;
     private final AdminAuthService adminAuthService;
@@ -45,7 +48,7 @@ public class ReportServiceImpl implements ReportService {
 
     private void checkRateLimit(Long userId) {
         if (!rateLimitService.checkReportLimit(userId)) {
-            throw new RuntimeException("举报过于频繁，请稍后再试（每小时最多" + RATE_LIMIT_PER_HOUR + "条）");
+            throw new BusinessException(ErrorCode.REPORT_LIMIT, "举报过于频繁，请稍后再试（每小时最多" + RATE_LIMIT_PER_HOUR + "条）");
         }
     }
 
@@ -56,7 +59,7 @@ public class ReportServiceImpl implements ReportService {
                 .eq(Report::getUserId, userId)
                 .eq(Report::getStatus, 2));
         if (totalRejected >= 20) {
-            throw new RuntimeException("你的举报权限已受限，因多次举报未通过审核");
+            throw new BusinessException(ErrorCode.REPORT_PERMISSION_LIMITED);
         }
     }
 
@@ -66,10 +69,10 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public ReportSubmitVO submitReport(String targetType, Long targetId, String reason, String description, Long userId) {
         if (targetId == null) {
-            throw new RuntimeException("举报对象不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "举报对象不能为空");
         }
         if (reason == null || reason.trim().isEmpty()) {
-            throw new RuntimeException("举报原因不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "举报原因不能为空");
         }
 
         checkRateLimit(userId);
@@ -77,7 +80,7 @@ public class ReportServiceImpl implements ReportService {
 
         TargetInfo targetInfo = loadTargetInfo(normalizeTargetType(targetType), targetId);
         if (targetInfo.ownerUserId != null && targetInfo.ownerUserId.equals(userId)) {
-            throw new RuntimeException("不能举报自己发布的内容");
+            throw new BusinessException(ErrorCode.REPORT_SELF);
         }
 
         // 1.5: 检查 status=0（待处理）和 status=1（已采纳，内容已删）
@@ -87,7 +90,7 @@ public class ReportServiceImpl implements ReportService {
                 .eq(Report::getTargetId, targetId)
                 .in(Report::getStatus, 0, 1));
         if (existingActive > 0) {
-            throw new RuntimeException("该内容已被举报处理或正在处理中");
+            throw new BusinessException(ErrorCode.REPORT_DUPLICATE);
         }
 
         Report report = new Report();
@@ -170,17 +173,17 @@ public class ReportServiceImpl implements ReportService {
     public void resolveReport(Long adminUserId, ResolveReportRequest request) {
         adminAuthService.requireAdmin(adminUserId);
         if (request == null || request.getReportId() == null) {
-            throw new RuntimeException("举报ID不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "举报ID不能为空");
         }
         if (request.getHandleResult() == null || request.getHandleResult().trim().isEmpty()) {
-            throw new RuntimeException("处理结果不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "处理结果不能为空");
         }
         String action = request.getAction();
         if (action == null || action.isBlank()) {
             action = ACTION_REMOVE_CONTENT;
         }
         if (!ACTION_REMOVE_CONTENT.equals(action)) {
-            throw new RuntimeException("暂不支持的处理动作");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持的处理动作");
         }
 
         Report report = getPendingReport(request.getReportId());
@@ -231,10 +234,10 @@ public class ReportServiceImpl implements ReportService {
     public void rejectReport(Long adminUserId, RejectReportRequest request) {
         adminAuthService.requireAdmin(adminUserId);
         if (request == null || request.getReportId() == null) {
-            throw new RuntimeException("举报ID不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "举报ID不能为空");
         }
         if (request.getHandleResult() == null || request.getHandleResult().trim().isEmpty()) {
-            throw new RuntimeException("驳回原因不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "驳回原因不能为空");
         }
 
         Report report = getPendingReport(request.getReportId());
@@ -260,10 +263,10 @@ public class ReportServiceImpl implements ReportService {
     public void batchResolve(Long adminUserId, BatchReportActionRequest request) {
         adminAuthService.requireAdmin(adminUserId);
         if (request.getReportIds() == null || request.getReportIds().isEmpty()) {
-            throw new RuntimeException("请选择要处理的举报");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请选择要处理的举报");
         }
         if (request.getHandleResult() == null || request.getHandleResult().trim().isEmpty()) {
-            throw new RuntimeException("处理结果不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "处理结果不能为空");
         }
         for (Long reportId : request.getReportIds()) {
             try {
@@ -283,10 +286,10 @@ public class ReportServiceImpl implements ReportService {
     public void batchReject(Long adminUserId, BatchReportActionRequest request) {
         adminAuthService.requireAdmin(adminUserId);
         if (request.getReportIds() == null || request.getReportIds().isEmpty()) {
-            throw new RuntimeException("请选择要处理的举报");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请选择要处理的举报");
         }
         if (request.getHandleResult() == null || request.getHandleResult().trim().isEmpty()) {
-            throw new RuntimeException("驳回原因不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "驳回原因不能为空");
         }
         for (Long reportId : request.getReportIds()) {
             try {
@@ -372,9 +375,9 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public void punishUser(Long adminUserId, PunishUserRequest request) {
         adminAuthService.requireAdmin(adminUserId);
-        if (request.getUserId() == null) throw new RuntimeException("用户ID不能为空");
+        if (request.getUserId() == null) throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户ID不能为空");
         if (request.getPunishmentType() == null || request.getPunishmentType().isBlank()) {
-            throw new RuntimeException("处罚类型不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "处罚类型不能为空");
         }
 
         applyPunishment(request.getUserId(), request.getReportId(), request.getPunishmentType(),
@@ -439,7 +442,7 @@ public class ReportServiceImpl implements ReportService {
             return null;
         }
 
-        throw new RuntimeException("不支持的举报对象类型");
+        throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的举报对象类型");
     }
 
     private void autoCloseRelatedReports(Report resolved, Long adminUserId) {
@@ -509,7 +512,7 @@ public class ReportServiceImpl implements ReportService {
     private void applyPunishment(Long userId, Long reportId, String punishmentType,
                                  int days, String reason, Long adminUserId) {
         User user = userMapper.selectById(userId);
-        if (user == null) throw new RuntimeException("用户不存在");
+        if (user == null) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 
         switch (punishmentType) {
             case "warning" -> {
@@ -540,7 +543,7 @@ public class ReportServiceImpl implements ReportService {
                         "punishment", null, null,
                         "你的账号因严重违规已被封禁。");
             }
-            default -> throw new RuntimeException("不支持的处罚类型：" + punishmentType);
+            default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的处罚类型：" + punishmentType);
         }
 
         if (reportId != null) {
@@ -600,7 +603,7 @@ public class ReportServiceImpl implements ReportService {
     private Report getPendingReport(Long reportId) {
         Report report = getReport(reportId);
         if (!Objects.equals(report.getStatus(), 0)) {
-            throw new RuntimeException("该举报已处理，请勿重复操作");
+            throw new BusinessException(ErrorCode.REPORT_ALREADY_HANDLED);
         }
         return report;
     }
@@ -608,7 +611,7 @@ public class ReportServiceImpl implements ReportService {
     private Report getReport(Long reportId) {
         Report report = reportMapper.selectById(reportId);
         if (report == null) {
-            throw new RuntimeException("举报记录不存在");
+            throw new BusinessException(ErrorCode.REPORT_NOT_FOUND);
         }
         return report;
     }
@@ -618,14 +621,14 @@ public class ReportServiceImpl implements ReportService {
                 || TARGET_TYPE_MESSAGE.equals(targetType)) {
             return targetType;
         }
-        throw new RuntimeException("不支持的举报对象类型");
+        throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的举报对象类型");
     }
 
     private TargetInfo loadTargetInfo(String targetType, Long targetId) {
         if (TARGET_TYPE_PHOTO.equals(targetType)) {
             Photo photo = photoMapper.selectById(targetId);
             if (photo == null) {
-                throw new RuntimeException("照片不存在");
+                throw new BusinessException(ErrorCode.PHOTO_NOT_FOUND);
             }
             return new TargetInfo(targetType, photo.getUserId(), photo.getLocationName(),
                     photo.getImageUrl(), photo.getId(), null);
@@ -634,7 +637,7 @@ public class ReportServiceImpl implements ReportService {
         if (TARGET_TYPE_COMMENT.equals(targetType)) {
             Comment comment = commentMapper.selectById(targetId);
             if (comment == null) {
-                throw new RuntimeException("评论不存在");
+                throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
             }
             return new TargetInfo(targetType, comment.getUserId(), comment.getContent(),
                     null, comment.getPhotoId(), comment.getId());
@@ -643,13 +646,13 @@ public class ReportServiceImpl implements ReportService {
         if (TARGET_TYPE_MESSAGE.equals(targetType)) {
             Message message = messageMapper.selectById(targetId);
             if (message == null) {
-                throw new RuntimeException("消息不存在");
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "消息不存在");
             }
             return new TargetInfo(targetType, message.getFromUserId(), message.getContent(),
                     null, null, null);
         }
 
-        throw new RuntimeException("不支持的举报对象类型");
+        throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的举报对象类型");
     }
 
     private MyReportItemVO toMyReportItem(Report report) {
@@ -722,7 +725,7 @@ public class ReportServiceImpl implements ReportService {
         }
 
         if (report.getHandledBy() != null) {
-            User handler = userMapper.selectById(report.getHandledBy());
+            AdminAccount handler = adminAccountMapper.selectById(report.getHandledBy());
             if (handler != null) {
                 response.setHandledByNickname(handler.getNickname());
             }

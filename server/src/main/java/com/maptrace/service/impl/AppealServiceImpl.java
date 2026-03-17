@@ -2,12 +2,15 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.maptrace.common.BusinessException;
+import com.maptrace.common.ErrorCode;
 import com.maptrace.mapper.AppealMapper;
 import com.maptrace.mapper.ReportMapper;
 import com.maptrace.mapper.UserMapper;
 import com.maptrace.mapper.PhotoMapper;
 import com.maptrace.mapper.CommentMapper;
 import com.maptrace.mapper.CosDeleteRecordMapper;
+import com.maptrace.mapper.AdminAccountMapper;
 import com.maptrace.model.dto.*;
 import com.maptrace.model.vo.*;
 import com.maptrace.model.entity.*;
@@ -33,6 +36,7 @@ public class AppealServiceImpl implements AppealService {
     private final PhotoMapper photoMapper;
     private final CommentMapper commentMapper;
     private final CosDeleteRecordMapper cosDeleteRecordMapper;
+    private final AdminAccountMapper adminAccountMapper;
     private final AdminAuthService adminAuthService;
     private final NotificationService notificationService;
     private final AdminLogService adminLogService;
@@ -41,31 +45,31 @@ public class AppealServiceImpl implements AppealService {
     @Transactional
     public void submitAppeal(Long userId, AppealSubmitRequest request) {
         if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-            throw new RuntimeException("申诉原因不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "申诉原因不能为空");
         }
         if (request.getReportId() == null) {
-            throw new RuntimeException("关联举报ID不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "关联举报ID不能为空");
         }
 
         Report report = reportMapper.selectById(request.getReportId());
         if (report == null) {
-            throw new RuntimeException("关联举报不存在");
+            throw new BusinessException(ErrorCode.REPORT_NOT_FOUND, "关联举报不存在");
         }
 
         String type = request.getType();
         if ("content_removed".equals(type)) {
             if (!report.getStatus().equals(1)) {
-                throw new RuntimeException("该举报尚未被采纳，无法申诉");
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "该举报尚未被采纳，无法申诉");
             }
         } else if ("report_rejected".equals(type)) {
             if (!report.getUserId().equals(userId)) {
-                throw new RuntimeException("只能对自己的举报发起申诉");
+                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "只能对自己的举报发起申诉");
             }
             if (!report.getStatus().equals(2)) {
-                throw new RuntimeException("该举报尚未被驳回，无法申诉");
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "该举报尚未被驳回，无法申诉");
             }
         } else {
-            throw new RuntimeException("不支持的申诉类型");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的申诉类型");
         }
 
         long existing = appealMapper.selectCount(new LambdaQueryWrapper<Appeal>()
@@ -74,7 +78,7 @@ public class AppealServiceImpl implements AppealService {
                 .eq(Appeal::getType, type)
                 .eq(Appeal::getStatus, 0));
         if (existing > 0) {
-            throw new RuntimeException("已提交过申诉，请等待处理");
+            throw new BusinessException(ErrorCode.APPEAL_DUPLICATE);
         }
 
         Appeal appeal = new Appeal();
@@ -128,7 +132,7 @@ public class AppealServiceImpl implements AppealService {
         adminAuthService.requireAdmin(adminUserId);
         Appeal appeal = appealMapper.selectById(appealId);
         if (appeal == null) {
-            throw new RuntimeException("申诉记录不存在");
+            throw new BusinessException(ErrorCode.APPEAL_NOT_FOUND);
         }
         return toResponse(appeal);
     }
@@ -165,7 +169,7 @@ public class AppealServiceImpl implements AppealService {
         Appeal appeal = getPendingAppeal(request.getAppealId());
 
         if (request.getHandleResult() == null || request.getHandleResult().trim().isEmpty()) {
-            throw new RuntimeException("驳回原因不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "驳回原因不能为空");
         }
 
         appeal.setStatus(2);
@@ -189,14 +193,14 @@ public class AppealServiceImpl implements AppealService {
 
     private Appeal getPendingAppeal(Long appealId) {
         if (appealId == null) {
-            throw new RuntimeException("申诉ID不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "申诉ID不能为空");
         }
         Appeal appeal = appealMapper.selectById(appealId);
         if (appeal == null) {
-            throw new RuntimeException("申诉记录不存在");
+            throw new BusinessException(ErrorCode.APPEAL_NOT_FOUND);
         }
         if (appeal.getStatus() != 0) {
-            throw new RuntimeException("该申诉已处理");
+            throw new BusinessException(ErrorCode.APPEAL_ALREADY_HANDLED);
         }
         return appeal;
     }
@@ -220,13 +224,11 @@ public class AppealServiceImpl implements AppealService {
                             .eq(CosDeleteRecord::getContentId, targetId)
                             .eq(CosDeleteRecord::getIsDeleted, 1));
             if (!cosRecords.isEmpty()) {
-                throw new RuntimeException("内容已过保留期（COS 文件已清理），无法恢复");
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "内容已过保留期（COS 文件已清理），无法恢复");
             }
 
-            // 恢复照片：直接更新 deleted=0（绕过 MyBatis-Plus 逻辑删除过滤）
-            photoMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Photo>()
-                    .eq(Photo::getId, targetId)
-                    .set(Photo::getDeleted, 0));
+            // 恢复照片：直接用原生 SQL 绕过 @TableLogic 过滤
+            photoMapper.restoreById(targetId);
 
             // 取消 COS 延迟删除记录
             cosDeleteRecordMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<CosDeleteRecord>()
@@ -236,10 +238,8 @@ public class AppealServiceImpl implements AppealService {
                     .set(CosDeleteRecord::getIsDeleted, 2)); // 2 = 已取消
 
         } else if ("comment".equals(targetType)) {
-            // 恢复评论
-            commentMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Comment>()
-                    .eq(Comment::getId, targetId)
-                    .set(Comment::getDeleted, 0));
+            // 恢复评论：直接用原生 SQL 绕过 @TableLogic 过滤
+            commentMapper.restoreById(targetId);
         }
     }
 
@@ -263,7 +263,7 @@ public class AppealServiceImpl implements AppealService {
         }
 
         if (appeal.getHandledBy() != null) {
-            User handler = userMapper.selectById(appeal.getHandledBy());
+            AdminAccount handler = adminAccountMapper.selectById(appeal.getHandledBy());
             if (handler != null) {
                 r.setHandledByNickname(handler.getNickname());
             }

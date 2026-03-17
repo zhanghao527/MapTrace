@@ -16,7 +16,7 @@ export default function Login() {
     setLoading(true);
     try {
       const data: any = await login(values);
-      setAuth({ token: data.token, role: data.role, nickname: data.nickname, adminId: data.adminId, mustChangePassword: data.mustChangePassword });
+      setAuth({ token: data.token, role: data.role, nickname: data.nickname, adminId: data.adminId, mustChangePassword: data.mustChangePassword, rememberMe: values.rememberMe });
       if (data.mustChangePassword) {
         setPwdModal(true);
       } else {
@@ -59,7 +59,7 @@ export default function Login() {
           <Form.Item name="oldPassword" label="当前密码" rules={[{ required: true }]}>
             <Input.Password />
           </Form.Item>
-          <Form.Item name="newPassword" label="新密码" rules={[{ required: true, min: 8, message: '至少8位，包含大小写字母和数字' }]}>
+          <Form.Item name="newPassword" label="新密码" rules={[{ required: true, min: 8, message: '至少8位，包含大小写字母、数字和特殊字符' }]}>
             <Input.Password />
           </Form.Item>
         </Form>

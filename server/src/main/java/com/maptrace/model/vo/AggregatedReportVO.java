@@ -19,5 +19,6 @@ public class AggregatedReportVO {
     private List<String> reasons;
     private String earliestTime;
     private String latestTime;
+    @JsonSerialize(contentUsing = ToStringSerializer.class)
     private List<Long> reportIds;
 }

@@ -8,7 +8,7 @@ export default function Admins() {
   const { data, isLoading } = useQuery({ queryKey: ['admins'], queryFn: getAdminAccounts });
   const list: any[] = (data as any) || [];
   const [modalOpen, setModalOpen] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   const openCreate = () => { setEditId(null); form.resetFields(); setModalOpen(true); };
@@ -27,7 +27,7 @@ export default function Admins() {
     qc.invalidateQueries({ queryKey: ['admins'] });
   };
 
-  const handleReset = (id: number) => {
+  const handleReset = (id: string) => {
     Modal.confirm({
       title: '确认重置密码？',
       content: '密码将重置为 Admin@2026',
@@ -35,7 +35,7 @@ export default function Admins() {
     });
   };
 
-  const handleToggle = (id: number, enabled: boolean) => {
+  const handleToggle = (id: string, enabled: boolean) => {
     Modal.confirm({
       title: enabled ? '确认禁用？' : '确认启用？',
       onOk: async () => { await toggleAdminAccount(id); message.success('已切换'); qc.invalidateQueries({ queryKey: ['admins'] }); },

@@ -89,6 +89,14 @@ Page({
     this.setData({ showAppealDialog: false });
   },
 
+  onMaskTap() {
+    this.setData({ showAppealDialog: false });
+  },
+
+  preventTap() {
+    // 阻止事件冒泡到 mask
+  },
+
   onAppealSubmit() {
     const reason = (this.data.appealReason || '').trim();
     if (!reason) {

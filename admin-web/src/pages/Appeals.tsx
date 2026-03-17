@@ -13,7 +13,7 @@ export default function Appeals() {
   const { data, isLoading } = useQuery({ queryKey: ['appeals', params], queryFn: () => getAppeals(params) });
   const list: any = data || { list: [], total: 0 };
 
-  const handleAction = (id: number, action: 'resolve' | 'reject') => {
+  const handleAction = (id: string, action: 'resolve' | 'reject') => {
     Modal.confirm({
       title: action === 'resolve' ? '采纳申诉' : '驳回申诉',
       content: <Input.TextArea id="appeal-reason" placeholder={action === 'resolve' ? '采纳说明' : '驳回原因'} rows={3} />,

@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
     public Result<?> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常: {}", e.getMessage(), e);
         metricsCollector.recordBusinessError("runtime");
-        return Result.error(ErrorCode.SYSTEM_ERROR, e.getMessage());
+        return Result.error(ErrorCode.SYSTEM_ERROR, "系统繁忙，请稍后重试");
     }
 
     @ExceptionHandler(Exception.class)

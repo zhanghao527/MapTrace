@@ -171,7 +171,7 @@ Page({
         const text = (res.content || '').trim();
         if (!text) { wx.showToast({ title: '请输入处理结果', icon: 'none' }); return; }
         request('/admin/report/batch-resolve', 'POST', {
-          reportIds: this.data.selectedIds.map(Number),
+          reportIds: this.data.selectedIds,
           handleResult: text
         }).then(() => {
           wx.showToast({ title: '批量采纳成功', icon: 'success' });
@@ -198,7 +198,7 @@ Page({
         const text = (res.content || '').trim();
         if (!text) { wx.showToast({ title: '请输入驳回原因', icon: 'none' }); return; }
         request('/admin/report/batch-reject', 'POST', {
-          reportIds: this.data.selectedIds.map(Number),
+          reportIds: this.data.selectedIds,
           handleResult: text
         }).then(() => {
           wx.showToast({ title: '批量驳回成功', icon: 'success' });

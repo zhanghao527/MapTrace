@@ -26,6 +26,7 @@ spring:
 # JWT 配置（必须使用强随机密钥）
 jwt:
   secret: ${JWT_SECRET}  # 必须设置环境变量，无默认值
+  admin-secret: ${JWT_ADMIN_SECRET:}  # 管理后台独立密钥，强烈建议设置
   expiration: 604800000  # 7天
 
 # 腾讯云 COS 配置
@@ -44,10 +45,6 @@ wechat:
 tencent-map:
   key: ${TENCENT_MAP_KEY}  # 必须设置环境变量
 
-# 管理员用户 ID
-admin:
-  user-ids: ${ADMIN_USER_IDS:}
-
 # MyBatis 配置（生产环境关闭 SQL 日志）
 mybatis-plus:
   configuration:
@@ -58,3 +55,21 @@ mybatis-plus:
 subscribe-message:
   interaction-template-id: ${SUBSCRIBE_INTERACTION_TEMPLATE_ID:}
   report-template-id: ${SUBSCRIBE_REPORT_TEMPLATE_ID:}
+
+# CORS 配置（生产环境限制允许的域名）
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://maptrace.top}
+
+# Knife4j API 文档（生产环境关闭）
+knife4j:
+  enable: false
+
+# 管理员安全配置
+admin:
+  user-ids: ${ADMIN_USER_IDS:}
+  security:
+    init-password: ${ADMIN_INIT_PASSWORD:}  # 初始管理员密码，未设置则自动生成随机密码
+    default-password: ${ADMIN_DEFAULT_PASSWORD:}  # 重置密码时使用，必须设置
+    max-fail-count: ${ADMIN_MAX_FAIL_COUNT:5}
+    lock-minutes: ${ADMIN_LOCK_MINUTES:15}
+    password-expire-days: ${ADMIN_PASSWORD_EXPIRE_DAYS:90}

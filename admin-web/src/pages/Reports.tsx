@@ -15,12 +15,12 @@ export default function Reports() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [params, setParams] = useState<any>({ page: 1, size: 20 });
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const { data, isLoading } = useQuery({ queryKey: ['reports', params], queryFn: () => getReports(params) });
   const list: any = data || { list: [], total: 0 };
 
   const batchResolve = useMutation({
-    mutationFn: (ids: number[]) => {
+    mutationFn: (ids: string[]) => {
       return new Promise<void>((resolve, reject) => {
         Modal.confirm({
           title: `批量采纳 ${ids.length} 条举报`,
@@ -41,7 +41,7 @@ export default function Reports() {
   });
 
   const batchReject = useMutation({
-    mutationFn: (ids: number[]) => {
+    mutationFn: (ids: string[]) => {
       return new Promise<void>((resolve, reject) => {
         Modal.confirm({
           title: `批量驳回 ${ids.length} 条举报`,
@@ -99,7 +99,7 @@ export default function Reports() {
         )}
       </Space>
       <Table columns={columns} dataSource={list.list} rowKey="id" loading={isLoading}
-        rowSelection={{ selectedRowKeys: selected, onChange: (keys) => setSelected(keys as number[]),
+        rowSelection={{ selectedRowKeys: selected, onChange: (keys) => setSelected(keys as string[]),
           getCheckboxProps: (r: any) => ({ disabled: r.status !== 0 }) }}
         pagination={{ current: params.page, pageSize: params.size, total: list.total, showTotal: (t: number) => `共 ${t} 条`,
           onChange: (p, s) => setParams({ ...params, page: p, size: s }) }} />

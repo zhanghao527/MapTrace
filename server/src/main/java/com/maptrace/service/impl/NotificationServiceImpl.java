@@ -39,9 +39,9 @@ public class NotificationServiceImpl implements NotificationService {
     private static final Set<String> INTERACTION_TYPES = Set.of(
             "comment", "reply", "photo_like", "comment_like");
 
-    /** 举报结果类通知类型 */
-    private static final Set<String> REPORT_TYPES = Set.of(
-            "report_result", "content_removed");
+    /** 举报/管理类通知类型（fromUserId 为管理员，不在 t_user 表中） */
+    private static final Set<String> SYSTEM_TYPES = Set.of(
+            "report_result", "content_removed", "appeal_result", "warning", "punishment");
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -104,7 +104,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             wxSubscribeMessageService.trySend(userId, templateId, page, data);
 
-        } else if (REPORT_TYPES.contains(type)) {
+        } else if (SYSTEM_TYPES.contains(type)) {
             String templateId = subscribeMessageConfig.getReportTemplateId();
             if (templateId == null || templateId.isEmpty()) return;
 
@@ -158,10 +158,16 @@ public class NotificationServiceImpl implements NotificationService {
         r.setIsRead(n.getIsRead());
         r.setCreateTime(n.getCreateTime() != null ? n.getCreateTime().toString() : "");
 
-        User from = userMapper.selectById(n.getFromUserId());
-        if (from != null) {
-            r.setFromNickname(from.getNickname());
-            r.setFromAvatarUrl(from.getAvatarUrl());
+        if (SYSTEM_TYPES.contains(n.getType())) {
+            // 系统/管理员通知，不查用户表
+            r.setFromNickname("系统通知");
+            r.setFromAvatarUrl(null);
+        } else {
+            User from = userMapper.selectById(n.getFromUserId());
+            if (from != null) {
+                r.setFromNickname(from.getNickname());
+                r.setFromAvatarUrl(from.getAvatarUrl());
+            }
         }
 
         if (n.getPhotoId() != null) {

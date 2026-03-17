@@ -36,10 +36,18 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     private final ObjectMapper objectMapper;
     private final BusinessMetricsCollector metricsCollector;
     private static final BCryptPasswordEncoder ENCODER = new BCryptPasswordEncoder();
-    private static final String DEFAULT_PASSWORD = "Admin@2026";
-    private static final int MAX_FAIL_COUNT = 5;
-    private static final int LOCK_MINUTES = 15;
-    private static final int PASSWORD_EXPIRE_DAYS = 90;
+
+    @org.springframework.beans.factory.annotation.Value("${admin.security.default-password:#{null}}")
+    private String defaultPassword;
+
+    @org.springframework.beans.factory.annotation.Value("${admin.security.max-fail-count:5}")
+    private int maxFailCount;
+
+    @org.springframework.beans.factory.annotation.Value("${admin.security.lock-minutes:15}")
+    private int lockMinutes;
+
+    @org.springframework.beans.factory.annotation.Value("${admin.security.password-expire-days:90}")
+    private int passwordExpireDays;
 
     @Override
     @Transactional
@@ -59,13 +67,13 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         if (account.getLockUntil() != null && account.getLockUntil().isAfter(LocalDateTime.now())) {
             logLogin(account.getId(), "login_fail", ip, userAgent, "账号锁定中");
             metricsCollector.recordAdminLogin("fail");
-            throw new BusinessException(ErrorCode.ADMIN_ACCOUNT_LOCKED, "账号已锁定，请" + LOCK_MINUTES + "分钟后再试");
+            throw new BusinessException(ErrorCode.ADMIN_ACCOUNT_LOCKED, "账号已锁定，请" + lockMinutes + "分钟后再试");
         }
         if (!ENCODER.matches(request.getPassword(), account.getPasswordHash())) {
             int failCount = (account.getLoginFailCount() != null ? account.getLoginFailCount() : 0) + 1;
             account.setLoginFailCount(failCount);
-            if (failCount >= MAX_FAIL_COUNT) {
-                account.setLockUntil(LocalDateTime.now().plusMinutes(LOCK_MINUTES));
+            if (failCount >= maxFailCount) {
+                account.setLockUntil(LocalDateTime.now().plusMinutes(lockMinutes));
                 account.setLoginFailCount(0);
             }
             adminAccountMapper.updateById(account);
@@ -84,7 +92,7 @@ public class AdminAccountServiceImpl implements AdminAccountService {
 
         boolean mustChange = account.getMustChangePassword() != null && account.getMustChangePassword() == 1;
         if (!mustChange && account.getPasswordChangedAt() != null) {
-            if (account.getPasswordChangedAt().plusDays(PASSWORD_EXPIRE_DAYS).isBefore(LocalDateTime.now())) {
+            if (account.getPasswordChangedAt().plusDays(passwordExpireDays).isBefore(LocalDateTime.now())) {
                 mustChange = true;
             }
         }
@@ -184,7 +192,10 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         requireRole(adminId, "super_admin");
         AdminAccount account = adminAccountMapper.selectById(targetId);
         if (account == null) throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
-        account.setPasswordHash(ENCODER.encode(DEFAULT_PASSWORD));
+        if (defaultPassword == null || defaultPassword.isBlank()) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未配置默认重置密码，请设置 admin.security.default-password");
+        }
+        account.setPasswordHash(ENCODER.encode(defaultPassword));
         account.setMustChangePassword(1);
         account.setLoginFailCount(0);
         account.setLockUntil(null);
@@ -215,8 +226,14 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         if (password == null || password.length() < 8) {
             throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码长度至少8位");
         }
+        if (password.length() > 64) {
+            throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码长度不能超过64位");
+        }
         if (!password.matches(".*[a-z].*") || !password.matches(".*[A-Z].*") || !password.matches(".*\\d.*")) {
             throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码必须包含大小写字母和数字");
+        }
+        if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{}|;:,.<>?].*")) {
+            throw new BusinessException(ErrorCode.ADMIN_PASSWORD_WEAK, "密码必须包含至少一个特殊字符");
         }
     }
 

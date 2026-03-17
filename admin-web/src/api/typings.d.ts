@@ -7,16 +7,16 @@ export interface AdminLoginVO {
   token: string;
   role: string;
   nickname: string;
-  adminId: number;
+  adminId: string;
   mustChangePassword: boolean;
 }
 
 export interface AdminAccountVO {
-  id: number;
+  id: string;
   username: string;
   nickname: string;
   role: string;
-  linkedUserId: number | null;
+  linkedUserId: string | null;
   isEnabled: boolean;
   lastLoginTime: string;
   lastLoginIp: string;
@@ -107,7 +107,7 @@ export interface AdminReportDetailVO {
 }
 
 export interface ResolveReportParams {
-  reportId: number;
+  reportId: string;
   action: string;
   handleResult: string;
   punishmentType?: string;
@@ -115,12 +115,12 @@ export interface ResolveReportParams {
 }
 
 export interface RejectReportParams {
-  reportId: number;
+  reportId: string;
   handleResult: string;
 }
 
 export interface BatchReportParams {
-  reportIds: number[];
+  reportIds: string[];
   handleResult: string;
 }
 
@@ -140,12 +140,12 @@ export interface AggregatedReportVO {
   reasons: string[];
   earliestTime: string;
   latestTime: string;
-  reportIds: number[];
+  reportIds: string[];
 }
 
 // ===== Appeals =====
 export interface AppealVO {
-  id: number;
+  id: string;
   userId: string;
   userNickname: string;
   userAvatarUrl: string;
@@ -169,7 +169,7 @@ export interface AppealPageVO {
 }
 
 export interface HandleAppealParams {
-  appealId: number;
+  appealId: string;
   handleResult: string;
 }
 

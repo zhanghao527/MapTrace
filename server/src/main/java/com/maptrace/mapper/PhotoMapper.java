@@ -10,11 +10,15 @@ import com.maptrace.model.entity.Photo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
 @Mapper
 public interface PhotoMapper extends BaseMapper<Photo> {
+
+    @Update("UPDATE t_photo SET deleted = 0 WHERE id = #{id}")
+    void restoreById(@Param("id") Long id);
 
     @Select("""
         <script>

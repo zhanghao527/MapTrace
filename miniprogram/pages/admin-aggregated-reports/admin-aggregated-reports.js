@@ -68,7 +68,7 @@ Page({
         const text = (res.content || '').trim();
         if (!text) { wx.showToast({ title: '请输入处理结果', icon: 'none' }); return; }
         request('/admin/report/batch-resolve', 'POST', {
-          reportIds: item.reportIds.map(Number),
+          reportIds: item.reportIds,
           handleResult: text
         }).then(() => {
           wx.showToast({ title: '批量采纳成功', icon: 'success' });

@@ -2,6 +2,8 @@ package com.maptrace.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.maptrace.common.BusinessException;
+import com.maptrace.common.ErrorCode;
 import com.maptrace.mapper.CommentLikeMapper;
 import com.maptrace.mapper.CommentMapper;
 import com.maptrace.mapper.UserMapper;
@@ -142,10 +144,10 @@ public class CommentServiceImpl implements CommentService {
     private void deleteCommentInternal(Long commentId, Long userId, boolean checkOwner) {
         Comment comment = commentMapper.selectById(commentId);
         if (comment == null) {
-            throw new RuntimeException("评论不存在");
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
         if (checkOwner && !comment.getUserId().equals(userId)) {
-            throw new RuntimeException("无权删除");
+            throw new BusinessException(ErrorCode.COMMENT_DELETE_FORBIDDEN);
         }
 
         // 如果是顶级评论，删除所有子评论

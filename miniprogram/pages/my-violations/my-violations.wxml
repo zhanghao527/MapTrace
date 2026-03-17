@@ -31,14 +31,17 @@
   <view class="loading" wx:if="{{!hasMore && violations.length}}"><text>没有更多了</text></view>
 
   <!-- 申诉弹窗 -->
-  <view class="mask" wx:if="{{showAppealDialog}}" bindtap="onAppealCancel">
-    <view class="dialog" catchtap="">
+  <view class="mask" wx:if="{{showAppealDialog}}" catchtap="onMaskTap">
+    <view class="dialog" catchtap="preventTap">
       <view class="dialog-title">申诉原因</view>
       <textarea class="dialog-textarea"
         placeholder="请说明你认为处理不当的原因..."
         value="{{appealReason}}"
         bindinput="onAppealInput"
-        maxlength="1000" />
+        maxlength="1000"
+        adjust-position="{{false}}"
+        cursor-spacing="120"
+        focus="{{showAppealDialog}}" />
       <view class="dialog-btns">
         <view class="dialog-btn cancel" bindtap="onAppealCancel">取消</view>
         <view class="dialog-btn confirm" bindtap="onAppealSubmit">提交申诉</view>
