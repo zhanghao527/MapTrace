@@ -1,0 +1,49 @@
+# 管理后台前端自动部署 - push 到 main 分支时触发
+# 流程：npm build → SCP 到服务器静态目录
+#
+# 需要在 GitHub Secrets 中配置：
+#   SERVER_HOST     - 服务器 IP
+#   SERVER_USER     - SSH 用户名
+#   SERVER_SSH_KEY  - SSH 私钥
+
+name: Deploy Admin Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin-web/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: admin-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: admin-web
+
+      - name: Build
+        run: npm run build
+        working-directory: admin-web
+
+      - name: Deploy to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "admin-web/dist/*"
+          target: /www/wwwroot/admin.maptrace.top
+          strip_components: 2
+          rm: true
