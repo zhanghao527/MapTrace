@@ -39,7 +39,7 @@
             </view>
             <view class="rank-data-item {{sortBy === 'todayCount' ? 'highlight' : ''}}" wx:if="{{item.todayCount > 0}}">
               <text class="rank-data-num">{{item.todayCount}}</text>
-              <text class="rank-data-label">今日</text>
+              <text class="rank-data-label">今日上传</text>
             </view>
           </view>
         </view>

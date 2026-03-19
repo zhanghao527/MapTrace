@@ -9,6 +9,8 @@ Page({
     current: 0,
     total: 0,
     photo: {},
+    photoHeights: [],
+    swiperHeight: 560,
     comments: [],
     commentTotal: 0,
     commentPage: 1,
@@ -47,7 +49,7 @@ Page({
         const photos = (res.data || []).map(p => this._formatPhoto(p));
         if (!photos.length) { wx.showToast({ title: '照片不存在', icon: 'none' }); return; }
         this._photoId = photos[0].id;
-        this.setData({ photos, total: photos.length, current: 0, photo: photos[0] });
+        this.setData({ photos, total: photos.length, current: 0, photo: photos[0], photoHeights: [], swiperHeight: 560 });
         this.loadComments(true);
       })
       .catch(() => {
@@ -59,7 +61,7 @@ Page({
     request('/photo/detail/' + id, 'GET')
       .then((res) => {
         const photo = this._formatPhoto(res.data || {});
-        this.setData({ photos: [photo], total: 1, current: 0, photo });
+        this.setData({ photos: [photo], total: 1, current: 0, photo, photoHeights: [], swiperHeight: 560 });
         this.loadComments(true);
       })
       .catch(() => {
@@ -396,11 +398,26 @@ Page({
 
   // ========== 轮播 ==========
 
+  onImageLoad(e) {
+    const { width, height } = e.detail;
+    const idx = e.currentTarget.dataset.idx;
+    if (!width || !height) return;
+    const h = Math.round(750 * height / width);
+    const photoHeights = this.data.photoHeights || [];
+    photoHeights[idx] = Math.min(1200, Math.max(300, h));
+    const current = this.data.current;
+    const updates = { photoHeights };
+    if (idx === current) updates.swiperHeight = photoHeights[idx];
+    this.setData(updates);
+  },
+
   onSwiperChange(e) {
     const idx = e.detail.current;
     const photo = this.data.photos[idx];
     this._photoId = photo.id;
-    this.setData({ current: idx, photo });
+    const photoHeights = this.data.photoHeights || [];
+    const swiperHeight = photoHeights[idx] || 560;
+    this.setData({ current: idx, photo, swiperHeight });
     this.loadComments(true);
   },
 

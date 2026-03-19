@@ -2,7 +2,20 @@ const { request, uploadFile, checkLogin } = require('../../utils/request');
 const QQMapWX = require('../../utils/qqmap-wx-jssdk.min.js');
 const app = getApp();
 
+/**
+ * 对 COS 原图 URL 追加缩略图处理参数，减少加载体积（需开通数据万象）。
+ * 当 thumbnailUrl 与 imageUrl 相同或为空时，说明后端未生成真实缩略图，用 URL 参数按需缩放。
+ */
+function buildThumbUrl(imageUrl, thumbnailUrl) {
+  const raw = thumbnailUrl || imageUrl || '';
+  if (!raw || !raw.includes('.cos.')) return raw;
+  if (thumbnailUrl && thumbnailUrl !== imageUrl) return raw;
+  const sep = raw.includes('?') ? '&' : '?';
+  return raw + sep + 'imageMogr2/thumbnail/216x200';
+}
+
 const TEMP_MARKER_ID = 99999;
+
 const YEARS = [];
 const _currentYear = new Date().getFullYear();
 for (let y = 1900; y <= _currentYear; y++) YEARS.push(y);
@@ -23,6 +36,28 @@ function buildMonths(year) {
   const arr = [];
   for (let m = 1; m <= max; m++) arr.push(m);
   return arr;
+}
+
+/** 与后端一致：仅支持 JPG/PNG/GIF/WebP/HEIC，选择后过滤不支持的格式 */
+const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'];
+const UNSUPPORTED_EXT = ['.svg', '.bmp', '.tiff', '.tif', '.ico'];
+
+function filterSupportedImages(tempFiles) {
+  const supported = [];
+  let filteredCount = 0;
+  for (const f of tempFiles) {
+    const path = (f.tempFilePath || '').toLowerCase();
+    const idx = path.lastIndexOf('.');
+    const ext = idx >= 0 ? '.' + path.slice(idx + 1) : '';
+    if (ext && UNSUPPORTED_EXT.includes(ext)) {
+      filteredCount++;
+    } else if (!ext || ALLOWED_EXT.includes(ext)) {
+      supported.push(f.tempFilePath);
+    } else {
+      filteredCount++;
+    }
+  }
+  return { supported, filteredCount };
 }
 
 Page({
@@ -86,7 +121,9 @@ Page({
     areaTodayUsers: 0,
     areaFilterUsers: 0,
     // 未读消息
-    unreadTotal: 0
+    unreadTotal: 0,
+    // 拖拽状态
+    isDragging: false
   },
 
   onLoad(options) {
@@ -548,7 +585,7 @@ Page({
           this._photoIdMap[id] = group.map(p => p.id);
           this._photoUrlMap[id] = first.imageUrl || first.thumbnailUrl || '';
 
-          const thumbUrl = first.thumbnailUrl || first.imageUrl || '';
+          const thumbUrl = buildThumbUrl(first.imageUrl, first.thumbnailUrl);
           const count = group.length;
           const commentCount = group.reduce((sum, p) => sum + (p.commentCount || 0), 0);
           const likeCount = group.reduce((sum, p) => sum + (p.likeCount || 0), 0);
@@ -783,6 +820,29 @@ Page({
     this.setData({ uploadDesc: val, uploadDescLength: val.length });
   },
 
+  /** 支持的图片格式（与后端一致），用于选择后过滤 */
+  _ALLOWED_EXT: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'],
+
+  _filterSupportedImages(tempFiles) {
+    const allowed = this._ALLOWED_EXT;
+    const supported = [];
+    let filtered = 0;
+    for (const f of tempFiles) {
+      const path = (f.tempFilePath || '').toLowerCase();
+      const dot = path.lastIndexOf('.');
+      const ext = dot >= 0 ? path.slice(dot) : '';
+      if (!ext || allowed.includes(ext)) {
+        supported.push(f.tempFilePath);
+      } else {
+        filtered++;
+      }
+    }
+    if (filtered > 0) {
+      this._showToast(`已过滤 ${filtered} 张不支持的格式（仅支持 JPG/PNG/GIF/WebP/HEIC）`);
+    }
+    return supported;
+  },
+
   onChooseImages() {
     const remaining = 9 - this.data.selectedImages.length;
     if (remaining <= 0) { this._showToast('最多选择9张'); return; }
@@ -791,7 +851,8 @@ Page({
       mediaType: ['image'],
       sizeType: ['compressed'],
       success: (res) => {
-        const newImages = res.tempFiles.map(f => f.tempFilePath);
+        const newImages = this._filterSupportedImages(res.tempFiles);
+        if (!newImages.length) return;
         this.setData({
           selectedImages: [...this.data.selectedImages, ...newImages]
         });
@@ -809,7 +870,8 @@ Page({
       sourceType: ['camera'],
       sizeType: ['compressed'],
       success: (res) => {
-        const newImages = res.tempFiles.map(f => f.tempFilePath);
+        const newImages = this._filterSupportedImages(res.tempFiles);
+        if (!newImages.length) return;
         this.setData({
           selectedImages: [...this.data.selectedImages, ...newImages]
         });
@@ -899,7 +961,11 @@ Page({
   },
 
   onRegionChange(e) {
+    if (e.type === 'begin') {
+      if (!this.data.isDragging) this.setData({ isDragging: true });
+    }
     if (e.type === 'end') {
+      if (this.data.isDragging) this.setData({ isDragging: false });
       this.mapCtx.getCenterLocation({
         success: (res) => {
           this._currentLat = res.latitude;

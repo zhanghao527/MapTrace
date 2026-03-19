@@ -6,7 +6,7 @@
       <view class="user-meta">
         <text class="user-nick">{{user.nickname || '微信用户'}}</text>
         <text class="user-summary" wx:if="{{user.photoCount > 0}}">
-          TA 已留下 {{user.photoCount || 0}} 张照片，足迹覆盖 {{user.areaCount || 0}} 个区域
+          TA 已上传 {{user.photoCount || 0}} 张照片，足迹覆盖 {{user.areaCount || 0}} 个区域
         </text>
         <text class="user-summary" wx:else>TA 还没有公开的拍摄记录</text>
       </view>

@@ -8,7 +8,7 @@
   <view class="loading-bar {{loadingPhotos ? 'show' : ''}}"></view>
 
   <!-- 顶部居中：区县名卡片 -->
-  <view class="top-district-card" wx:if="{{districtName}}" bindtap="onDistrictTap">
+  <view class="top-district-card {{isDragging ? 'drag-hide' : ''}}" wx:if="{{districtName}}" bindtap="onDistrictTap">
     <view class="district-row">
       <image class="district-icon" src="/images/icon-location.svg" />
       <text class="district-text">{{districtName}}</text>
@@ -29,7 +29,7 @@
   </view>
 
   <!-- 右侧工具栏（去掉了"+"按钮） -->
-  <view class="right-toolbar">
+  <view class="right-toolbar {{isDragging ? 'drag-hide' : ''}}">
     <view class="toolbar-btn" bindtap="onProfileTap">
       <image class="toolbar-icon-img" src="/images/icon-user.svg" />
     </view>
@@ -111,7 +111,7 @@
   </view>
 
   <!-- 时光筛选卡片 -->
-  <view class="filter-card {{filterActive ? 'active' : ''}} {{showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}" wx:if="{{filterActive}}" bindtap="onFilterTap" hover-class="filter-card-hover">
+  <view class="filter-card {{filterActive ? 'active' : ''}} {{isDragging || showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}" wx:if="{{filterActive}}" bindtap="onFilterTap" hover-class="filter-card-hover">
     <view class="filter-bar-indicator"></view>
     <view class="filter-content">
       <view class="filter-main-row">
@@ -151,13 +151,13 @@
         <cover-view class="photo-callout">
           <cover-view class="photo-card">
             <cover-image class="photo-thumb" src="{{item.thumbUrl}}" />
-            <cover-view class="photo-bar" wx:if="{{item.count > 1 || item.commentCount > 0 || item.likeCount > 0}}">
-              <cover-view class="photo-bar-comment" wx:if="{{item.commentCount > 0}}">💬 {{item.commentCount > 9 ? '9+' : item.commentCount}}</cover-view>
-              <cover-view class="photo-bar-like" wx:if="{{item.likeCount > 0}}">❤️ {{item.likeCount > 9 ? '9+' : item.likeCount}}</cover-view>
-              <cover-view class="photo-bar-count" wx:if="{{item.count > 1}}">{{item.count > 9 ? '9+' : item.count}}</cover-view>
+            <cover-view class="photo-count" wx:if="{{item.count > 1}}">
+              {{item.count > 99 ? '99+' : item.count}}
             </cover-view>
           </cover-view>
-          <cover-view class="photo-arrow"></cover-view>
+          <cover-view class="photo-arrow-wrap">
+            <cover-view class="photo-arrow"></cover-view>
+          </cover-view>
         </cover-view>
       </cover-view>
     </block>
@@ -178,7 +178,7 @@
   </map>
 
   <!-- 悬浮底部栏 -->
-  <view class="floating-bar {{showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}">
+  <view class="floating-bar {{isDragging || showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}">
     <view class="bar-btn" bindtap="onChatTap">
       <view class="bar-icon-circle">
         <image class="bar-icon-img" src="/images/icon-chat.svg" />

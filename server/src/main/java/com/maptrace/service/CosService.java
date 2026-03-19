@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.maptrace.common.BusinessException;
 import com.maptrace.common.ErrorCode;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -87,11 +89,20 @@ public class CosService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif");
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif");
+            "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif");
+    /** Content-Type -> 扩展名映射（当文件名无扩展名时推断） */
+    private static final java.util.Map<String, String> CONTENT_TYPE_TO_EXT = java.util.Map.of(
+            "image/jpeg", ".jpg", "image/jpg", ".jpg", "image/png", ".png", "image/gif", ".gif",
+            "image/webp", ".webp", "image/heic", ".heic", "image/heif", ".heif");
+    /** 扩展名 -> Content-Type 映射（魔数/扩展名校验通过时推断） */
+    private static final java.util.Map<String, String> EXT_TO_CONTENT_TYPE = java.util.Map.of(
+            ".jpg", "image/jpeg", ".jpeg", "image/jpeg", ".png", "image/png", ".gif", "image/gif",
+            ".webp", "image/webp", ".heic", "image/heic", ".heif", "image/heif");
     private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
     /**
      * 上传文件到 COS，返回访问 URL
+     * 兼容微信 chooseMedia 返回的临时文件（可能无扩展名、Content-Type 带参数或为 image/jpg）
      */
     public String upload(MultipartFile file) {
         // 文件校验
@@ -101,19 +112,38 @@ public class CosService {
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new BusinessException(ErrorCode.PHOTO_SIZE_EXCEEDED, "文件大小不能超过20MB");
         }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件类型，仅允许 JPG/PNG/GIF/WebP/HEIC");
-        }
 
+        String contentType = file.getContentType();
+        String contentTypeBase = contentType != null ? contentType.split(";")[0].trim().toLowerCase() : null;
         String originalFilename = file.getOriginalFilename();
         String ext = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase()
                 : "";
-        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+
+        // 若扩展名为空，则根据 Content-Type 推断
+        if (ext.isEmpty() && contentTypeBase != null && CONTENT_TYPE_TO_EXT.containsKey(contentTypeBase)) {
+            ext = CONTENT_TYPE_TO_EXT.get(contentTypeBase);
+        }
+        // 若仍无扩展名，尝试通过文件头魔数推断（兼容微信 application/octet-stream 无扩展名）
+        boolean usedMagicBytes = false;
+        if (ext.isEmpty()) {
+            ext = inferExtFromMagicBytes(file);
+            usedMagicBytes = !ext.isEmpty();
+        }
+        // 若 Content-Type 为空或不在白名单，但扩展名合法，则允许（兼容部分客户端不传 Content-Type）
+        boolean contentTypeOk = contentTypeBase != null && ALLOWED_CONTENT_TYPES.contains(contentTypeBase);
+        boolean extOk = !ext.isEmpty() && ALLOWED_EXTENSIONS.contains(ext);
+        if (!contentTypeOk && !extOk) {
+            log.warn("文件类型校验失败: contentType={}, contentTypeBase={}, originalFilename={}, ext={}",
+                    contentType, contentTypeBase, originalFilename, ext);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件类型，仅允许 JPG/PNG/GIF/WebP/HEIC");
+        }
+        if (!extOk) {
+            log.warn("文件扩展名校验失败: originalFilename={}, ext={}", originalFilename, ext);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件扩展名，仅允许 jpg/png/gif/webp/heic");
         }
 
+        String effectiveContentType = contentTypeOk ? file.getContentType() : extToContentType(ext);
         java.time.Instant start = java.time.Instant.now();
         try {
             String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
@@ -121,10 +151,18 @@ public class CosService {
 
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
-            metadata.setContentType(file.getContentType());
+            metadata.setContentType(effectiveContentType);
 
+            InputStream uploadStream;
+            if (usedMagicBytes) {
+                // 魔数检测已消耗流，用 getBytes() 上传，避免流复用异常
+                byte[] bytes = file.getBytes();
+                uploadStream = new ByteArrayInputStream(bytes);
+            } else {
+                uploadStream = file.getInputStream();
+            }
             PutObjectRequest putRequest = new PutObjectRequest(
-                    cosConfig.getBucket(), key, file.getInputStream(), metadata);
+                    cosConfig.getBucket(), key, uploadStream, metadata);
             cosClient.putObject(putRequest);
 
             String url = "https://" + cosConfig.getBucket() + ".cos." + cosConfig.getRegion() + ".myqcloud.com/" + key;
@@ -142,6 +180,43 @@ public class CosService {
             metricsCollector.recordCosOperation("upload", "error");
             throw new BusinessException(ErrorCode.PHOTO_UPLOAD_FAILED, "图片上传失败，请稍后重试");
         }
+    }
+
+    /**
+     * 通过文件头魔数推断扩展名，兼容 Content-Type/扩展名缺失（如微信 application/octet-stream）
+     */
+    private static String inferExtFromMagicBytes(MultipartFile file) {
+        try {
+            byte[] header = new byte[16];
+            try (InputStream is = file.getInputStream()) {
+                int n = is.read(header);
+                if (n < 4) return "";
+            }
+            // JPEG: FF D8 FF
+            if (header[0] == (byte) 0xFF && header[1] == (byte) 0xD8 && header[2] == (byte) 0xFF) return ".jpg";
+            // PNG: 89 50 4E 47 0D 0A 1A 0A
+            if (header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) return ".png";
+            // GIF: 47 49 46 38 37 or 47 49 46 38 39
+            if (header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x38) return ".gif";
+            // WebP: RIFF....WEBP (52 49 46 46 ... 57 45 42 50)
+            if (header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46
+                    && header.length >= 12 && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50)
+                return ".webp";
+            // HEIC/HEIF: ftyp at offset 4
+            if (header.length >= 12 && header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70) {
+                if ((header[8] == 0x68 && header[9] == 0x65 && header[10] == 0x69 && header[11] == 0x63) // heic
+                        || (header[8] == 0x68 && header[9] == 0x65 && header[10] == 0x69 && header[11] == 0x78) // heix
+                        || (header[8] == 0x6D && header[9] == 0x69 && header[10] == 0x66 && header[11] == 0x31)) // mif1
+                    return ".heic";
+            }
+        } catch (Exception e) {
+            log.warn("魔数检测失败: {}", e.getMessage());
+        }
+        return "";
+    }
+
+    private static String extToContentType(String ext) {
+        return EXT_TO_CONTENT_TYPE.getOrDefault(ext.toLowerCase(), "image/jpeg");
     }
 
     /**

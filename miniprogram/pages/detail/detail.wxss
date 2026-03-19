@@ -13,7 +13,7 @@
 
 .photo-swiper {
   width: 100%;
-  height: 560rpx;
+  /* height 由 JS 根据图片宽高比动态设置 */
 }
 
 .photo {

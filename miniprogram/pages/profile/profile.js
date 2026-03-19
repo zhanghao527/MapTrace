@@ -14,11 +14,8 @@ Page({
     userInfo: {},
     profileNickname: '',
     avatarPreview: '',
-    phoneBound: false,
-    phoneMasked: '',
     canSubmit: false,
     savingProfile: false,
-    bindingPhone: false,
     isAdmin: false,
     topAreas: [],
     photos: [],
@@ -56,8 +53,6 @@ Page({
       userInfo: ui,
       profileNickname: ui.nickname || '',
       avatarPreview: ui.avatarUrl || '',
-      phoneBound: !!ui.phoneBound,
-      phoneMasked: ui.phoneMasked || '',
       isAdmin: isLoggedIn ? this.data.isAdmin : false,
       topAreas: isLoggedIn ? this.data.topAreas : []
     });
@@ -75,7 +70,7 @@ Page({
   _calcStartStep(info) {
     if (!info.avatarUrl) return 1;
     if (!info.nickname || info.nickname === '微信用户') return 2;
-    return 3; // 都有了，从手机号开始（编辑资料场景）
+    return 2; // 都有了，从昵称开始（编辑资料场景）
   },
 
   // 自动弹窗（仅在 loadUserMeta 拿到真实数据后调用一次）
@@ -112,8 +107,6 @@ Page({
           userInfo: Object.assign({}, this.data.userInfo, info),
           profileNickname: info.nickname || this.data.profileNickname,
           avatarPreview: info.avatarUrl || this.data.avatarPreview,
-          phoneBound: !!info.phoneBound,
-          phoneMasked: info.phoneMasked || '',
           isAdmin: !!info.isAdmin
         });
         this.updateCanSubmit();
@@ -211,6 +204,10 @@ Page({
     }
     if (step === 2 && !(this.data.profileNickname || '').trim()) {
       wx.showToast({ title: '请先填写你的昵称', icon: 'none' });
+      return;
+    }
+    if (step === 2) {
+      this.onSetupComplete();
       return;
     }
     this.setData({ setupStep: step + 1 });
@@ -313,27 +310,6 @@ Page({
     this.updateCanSubmit();
   },
 
-  onGetPhoneNumber(e) {
-    const code = e.detail && e.detail.code;
-    if (!code) {
-      wx.showToast({ title: '已取消授权', icon: 'none' });
-      return;
-    }
-    this.setData({ bindingPhone: true });
-    request('/auth/bind-phone', 'POST', { code })
-      .then(res => {
-        const masked = (res.data && res.data.phoneMasked) || '';
-        app.setUserInfo({ phoneBound: true, phoneMasked: masked, needPhone: false });
-        app.setAuthState({ needPhone: false, needProfile: app.globalData.needProfile });
-        this.setData({ phoneBound: true, phoneMasked: masked });
-        wx.showToast({ title: '手机号已绑定', icon: 'success' });
-      })
-      .catch(err => {
-        wx.showToast({ title: (err && err.message) || '绑定失败，请稍后重试', icon: 'none' });
-      })
-      .finally(() => this.setData({ bindingPhone: false }));
-  },
-
   // -------- 正常页面 --------
 
   onEditProfile() {
@@ -361,7 +337,6 @@ Page({
             photos: [], photoTotal: 0, unreadCount: 0, topAreas: [],
             isAdmin: false, pendingReportCount: 0, pendingAppealCount: 0,
             profileNickname: '', avatarPreview: '',
-            phoneBound: false, phoneMasked: '',
             showSetupSheet: false, setupStep: 1
           });
           this._syncLocalState();

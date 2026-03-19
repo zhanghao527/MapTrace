@@ -56,9 +56,8 @@
       <view class="user-main">
         <view class="user-info">
           <text class="nickname">{{userInfo.nickname || '微信用户'}}</text>
-          <text class="user-phone" wx:if="{{userInfo.phoneBound}}">{{userInfo.phoneMasked}}</text>
           <text class="user-summary" wx:if="{{userInfo.photoCount > 0}}">
-            已留下 {{userInfo.photoCount || 0}} 张照片，足迹覆盖 {{userInfo.areaCount || 0}} 个区域
+            已上传 {{userInfo.photoCount || 0}} 张照片，足迹覆盖 {{userInfo.areaCount || 0}} 个区域
           </text>
           <text class="user-summary" wx:else>去地图上传第一张照片，开始记录你的城市足迹</text>
         </view>
@@ -179,11 +178,6 @@
           <view class="s-dot">2</view>
           <text class="s-text">填写昵称</text>
         </view>
-        <view class="s-line {{setupStep >= 3 ? 'done' : ''}}"></view>
-        <view class="s-step {{setupStep >= 3 ? 'done' : ''}} {{setupStep === 3 ? 'current' : ''}}" bindtap="onStepTap" data-step="3">
-          <view class="s-dot">3</view>
-          <text class="s-text">绑定手机</text>
-        </view>
       </view>
 
       <!-- Step 1: 头像 -->
@@ -235,48 +229,8 @@
           <view class="sheet-btn-row">
             <view class="sheet-back-btn" bindtap="onSetupBack">上一步</view>
             <button class="sheet-primary-btn flex-btn {{profileNickname ? '' : 'disabled'}}" bindtap="onSetupNext">
-              下一步
+              完成设置
             </button>
-          </view>
-        </view>
-      </view>
-
-      <!-- Step 3: 手机号 -->
-      <view class="sheet-body" wx:if="{{setupStep === 3}}">
-        <view class="sheet-header">
-          <text class="sheet-title">绑定手机号</text>
-          <text class="sheet-desc">绑定后可用于账号安全验证（可跳过）</text>
-        </view>
-        <view class="sheet-center-block">
-          <button
-            wx:if="{{!phoneBound}}"
-            class="sheet-phone-auth-btn"
-            open-type="getPhoneNumber"
-            bindgetphonenumber="onGetPhoneNumber"
-            loading="{{bindingPhone}}"
-          >
-            <image class="phone-auth-icon" src="/images/icon-locate.svg" mode="aspectFit" />
-            <text class="phone-auth-text">{{bindingPhone ? '授权中...' : '一键获取微信手机号'}}</text>
-          </button>
-          <view wx:else class="sheet-phone-done">
-            <view class="phone-done-check">✓</view>
-            <text class="phone-done-number">{{phoneMasked}}</text>
-            <text class="phone-done-label">已绑定</text>
-          </view>
-        </view>
-        <view class="sheet-action">
-          <view class="sheet-btn-row">
-            <view class="sheet-back-btn" bindtap="onSetupBack">上一步</view>
-            <button
-              class="sheet-primary-btn flex-btn"
-              bindtap="onSetupComplete"
-              loading="{{savingProfile}}"
-            >
-              {{savingProfile ? '保存中...' : '完成设置'}}
-            </button>
-          </view>
-          <view class="sheet-skip-row" wx:if="{{!phoneBound}}" bindtap="onSetupComplete">
-            <text class="sheet-skip-text">跳过此步骤</text>
           </view>
         </view>
       </view>

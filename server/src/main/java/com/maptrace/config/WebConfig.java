@@ -3,9 +3,15 @@ package com.maptrace.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -72,5 +78,21 @@ public class WebConfig implements WebMvcConfigurer {
                         "/swagger-resources/**"
                 )
                 .order(2);
+    }
+
+    /**
+     * 强制 JSON 响应使用 UTF-8，避免微信等客户端乱码
+     */
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        for (HttpMessageConverter<?> converter : converters) {
+            if (converter instanceof MappingJackson2HttpMessageConverter jacksonConverter) {
+                jacksonConverter.setDefaultCharset(StandardCharsets.UTF_8);
+                jacksonConverter.setSupportedMediaTypes(List.of(
+                        new MediaType("application", "json", StandardCharsets.UTF_8),
+                        new MediaType("application", "*+json", StandardCharsets.UTF_8)));
+                break;
+            }
+        }
     }
 }

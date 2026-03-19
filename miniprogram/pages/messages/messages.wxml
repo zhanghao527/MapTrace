@@ -63,5 +63,5 @@
     <view class="conv-loading" wx:if="{{!notifHasMore && notifications.length}}"><text>没有更多了</text></view>
   </view>
 
-  <view class="conv-loading" wx:if="{{loading}}"><text>加载中...</text></view>
+  <view class="conv-loading" wx:if="{{activeTab === 'chat' && loading}}"><text>加载中...</text></view>
 </view>

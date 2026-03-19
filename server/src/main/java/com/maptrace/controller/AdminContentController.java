@@ -96,6 +96,11 @@ public class AdminContentController {
                                     @RequestAttribute("adminAccountId") Long adminId) {
         Photo photo = photoMapper.selectById(id);
         ThrowUtils.throwIf(photo == null, ErrorCode.PHOTO_NOT_FOUND);
+        // 登记 COS 文件到 30 天后删除队列
+        cosService.scheduleDelete(photo.getImageUrl(), "photo", photo.getId(), "admin_delete");
+        if (photo.getThumbnailUrl() != null && !photo.getThumbnailUrl().equals(photo.getImageUrl())) {
+            cosService.scheduleDelete(photo.getThumbnailUrl(), "photo", photo.getId(), "admin_delete");
+        }
         photoMapper.deleteById(id);
         adminLogService.log(adminId, "delete_photo", "photo", id, "管理员删除照片");
         return Result.success();

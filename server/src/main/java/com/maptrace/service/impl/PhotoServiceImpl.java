@@ -247,6 +247,11 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
         Photo photo = this.getById(photoId);
         if (photo == null) throw new BusinessException(ErrorCode.PHOTO_NOT_FOUND);
         if (!photo.getUserId().equals(userId)) throw new BusinessException(ErrorCode.PHOTO_DELETE_FORBIDDEN);
+        // 登记 COS 文件到 30 天后删除队列
+        cosService.scheduleDelete(photo.getImageUrl(), "photo", photo.getId(), "user_delete");
+        if (photo.getThumbnailUrl() != null && !photo.getThumbnailUrl().equals(photo.getImageUrl())) {
+            cosService.scheduleDelete(photo.getThumbnailUrl(), "photo", photo.getId(), "user_delete");
+        }
         this.removeById(photoId);
         metricsCollector.recordPhotoDelete(String.valueOf(userId), "user");
     }

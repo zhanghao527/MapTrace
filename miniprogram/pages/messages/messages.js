@@ -80,7 +80,10 @@ Page({
 
   onTabChat() {
     this.setData({ activeTab: 'chat' });
-    this.loadConversations();
+    // 有缓存时不重新加载，避免切换时闪烁
+    if (this.data.conversations.length === 0) {
+      this.loadConversations();
+    }
   },
 
   onTabNotification() {
@@ -90,7 +93,7 @@ Page({
         this.setData({ notifUnread: 0 });
       });
     }
-    if (!this.data.notifications.length) {
+    if (this.data.notifications.length === 0) {
       this.loadNotifications(true);
     }
   },

@@ -411,13 +411,18 @@
   border: 2rpx dashed #c3e6cb;
   font-size: 28rpx; color: #07c160; font-weight: 500;
   box-sizing: border-box;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 .sheet-phone-auth-btn::after { display: none; }
 .phone-auth-icon {
   width: 36rpx; height: 36rpx; margin-right: 12rpx;
+  flex-shrink: 0;
 }
 .phone-auth-text {
   font-size: 28rpx; color: #07c160;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .sheet-phone-done {
   display: flex; align-items: center; justify-content: center;
@@ -426,6 +431,7 @@
   background: #f0faf4;
   border: 2rpx solid #c3e6cb;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 .phone-done-check {
   width: 44rpx; height: 44rpx; line-height: 44rpx;
