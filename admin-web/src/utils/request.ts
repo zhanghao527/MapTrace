@@ -1,9 +1,13 @@
 import axios from 'axios';
 import { message } from 'antd';
+import { parseJsonPreservingBigInts } from './jsonSafe';
 
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
   timeout: 30000,
+  transformResponse: [
+    (raw) => parseJsonPreservingBigInts(raw),
+  ],
 });
 
 request.interceptors.request.use((config) => {
