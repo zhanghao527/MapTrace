@@ -349,6 +349,11 @@ public interface PhotoMapper extends BaseMapper<Photo> {
         <script>
         SELECT
             p.district,
+            CONCAT(SUBSTRING_INDEX(SUBSTRING_INDEX(
+              (SELECT p3.location_name FROM t_photo p3
+               WHERE p3.deleted = 0 AND p3.visibility = 2 AND p3.district = p.district
+               AND p3.location_name LIKE '%市%' LIMIT 1),
+              '市', 1), '省', -1), '市') AS city,
             COUNT(*) AS photo_count,
             COUNT(DISTINCT p.user_id) AS user_count,
             SUM(CASE WHEN DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END) AS today_count,
