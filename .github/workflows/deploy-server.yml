@@ -54,10 +54,10 @@ jobs:
             # 加载环境变量并启动
             source /www/maptrace/env.conf
 
-            nohup java -jar \
+            nohup java \
               -Xms256m -Xmx512m \
-              --spring.profiles.active=prod \
-              /www/maptrace/app.jar > /www/maptrace/app.log 2>&1 &
+              -jar /www/maptrace/app.jar \
+              --spring.profiles.active=prod > /www/maptrace/app.log 2>&1 &
 
             echo $! > /www/maptrace/app.pid
             echo "服务已启动，PID: $(cat /www/maptrace/app.pid)"
