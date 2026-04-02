@@ -329,6 +329,9 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
         var list = photoMapper.findDistrictRanking(sortBy, limit);
         for (int i = 0; i < list.size(); i++) {
             list.get(i).setRank(i + 1);
+            // city 字段暂存的是 location_name，提取出"xx市"
+            String loc = list.get(i).getCity();
+            list.get(i).setCity(extractCityFromLocation(loc));
         }
         long districtCount = photoMapper.countDistinctDistricts();
         long totalPhotos = photoMapper.countAllPhotosWithDistrict();
@@ -337,6 +340,21 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
         result.put("districtCount", districtCount);
         result.put("totalPhotos", totalPhotos);
         return result;
+    }
+
+    /** 从 location_name 中提取"xx市" */
+    private String extractCityFromLocation(String locationName) {
+        if (locationName == null || locationName.isEmpty()) return null;
+        int idx = locationName.indexOf("市");
+        if (idx <= 0) return null;
+        // 往前找省份结尾
+        String before = locationName.substring(0, idx + 1);
+        int start = before.lastIndexOf("省");
+        if (start < 0) start = before.lastIndexOf("自治区");
+        if (start < 0) start = -1;
+        else if (before.charAt(start) == '省') start = start; // "省"后一位
+        else start = start + 2; // "自治区"后
+        return before.substring(start + 1);
     }
 
     @Override
