@@ -42,10 +42,18 @@
     </view>
 
     <view class="login-action">
-      <button class="login-btn" bindtap="onLogin">
+      <view class="agreement-row" bindtap="onToggleAgreement">
+        <view class="agreement-checkbox {{agreedPolicy ? 'checked' : ''}}">
+          <text wx:if="{{agreedPolicy}}" class="check-icon">✓</text>
+        </view>
+        <text class="agreement-text">我已阅读并同意</text>
+        <text class="agreement-link" catchtap="onViewAgreement" data-type="user">《用户服务协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link" catchtap="onViewAgreement" data-type="privacy">《隐私政策》</text>
+      </view>
+      <button class="login-btn {{agreedPolicy ? '' : 'login-btn-disabled'}}" bindtap="onLogin">
         <text class="login-btn-text">微信授权登录</text>
       </button>
-      <text class="login-agreement">登录即表示同意《用户协议》和《隐私政策》</text>
     </view>
   </view>
 

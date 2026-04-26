@@ -121,7 +121,7 @@ Page({
     areaFilterUsers: 0,
     // 未读消息
     unreadTotal: 0,
-    // 可见性选择（0=仅自己, 1=互关可见, 2=所有人）
+    // 可见性选择（0=仅自己可见, 1=互关可见, 2=所有人可见）
     uploadVisibility: 2,
     // 拖拽状态（已移除）
   },

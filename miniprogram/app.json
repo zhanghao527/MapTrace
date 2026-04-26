@@ -16,7 +16,8 @@
     "pages/admin-logs/admin-logs",
     "pages/district-rank/district-rank",
     "pages/follow-list/follow-list",
-    "pages/footprint/footprint"
+    "pages/footprint/footprint",
+    "pages/agreement/agreement"
   ],
   "window": {
     "navigationBarTitleText": "地图时迹",

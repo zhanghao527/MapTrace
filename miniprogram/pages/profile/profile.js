@@ -27,6 +27,8 @@ Page({
     unreadCount: 0,
     pendingReportCount: 0,
     pendingAppealCount: 0,
+    // 隐私协议
+    agreedPolicy: false,
     // 弹窗
     showSetupSheet: false,
     setupStep: 1,
@@ -195,7 +197,23 @@ Page({
 
   // -------- 登录 --------
 
+  onToggleAgreement() {
+    this.setData({ agreedPolicy: !this.data.agreedPolicy });
+  },
+
+  onViewAgreement(e) {
+    const type = e.currentTarget.dataset.type;
+    // 跳转到协议页面，可根据实际情况替换为 web-view 或单独页面
+    wx.navigateTo({
+      url: `/pages/agreement/agreement?type=${type}`
+    });
+  },
+
   onLogin() {
+    if (!this.data.agreedPolicy) {
+      wx.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      return;
+    }
     wx.showLoading({ title: '登录中...' });
     app.login()
       .then(() => app.syncUserInfo().catch(() => null))

@@ -1,0 +1,6 @@
+<view class="agreement-page">
+  <view class="agreement-title">{{title}}</view>
+  <view class="agreement-content">
+    <rich-text nodes="{{content}}"></rich-text>
+  </view>
+</view>

@@ -94,6 +94,39 @@
   font-size: 22rpx; color: #b0b0b0; line-height: 1.6;
 }
 
+/* 协议勾选行 */
+.agreement-row {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 28rpx;
+  padding: 0 20rpx;
+}
+.agreement-checkbox {
+  width: 36rpx; height: 36rpx;
+  border: 2rpx solid #ccc;
+  border-radius: 6rpx;
+  margin-right: 10rpx;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.agreement-checkbox.checked {
+  background: #07c160;
+  border-color: #07c160;
+}
+.check-icon {
+  font-size: 24rpx; color: #fff; font-weight: 700; line-height: 1;
+}
+.agreement-text {
+  font-size: 24rpx; color: #999; line-height: 1.6;
+}
+.agreement-link {
+  font-size: 24rpx; color: #07c160; line-height: 1.6;
+}
+.login-btn-disabled {
+  opacity: 0.5;
+}
+
 /* 状态2的旧全页样式已移除，改为底部弹窗引导 */
 
 /* ================================================================

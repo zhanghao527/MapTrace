@@ -83,13 +83,13 @@
     <view class="upload-float-row visibility-row">
       <view class="visibility-options">
         <view class="visibility-opt {{uploadVisibility === 0 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="0">
-          <text class="visibility-icon">🔒</text><text>仅自己</text>
+          <text class="visibility-icon">🔒</text><text>仅自己可见</text>
         </view>
         <view class="visibility-opt {{uploadVisibility === 1 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="1">
           <text class="visibility-icon">👥</text><text>互关可见</text>
         </view>
         <view class="visibility-opt {{uploadVisibility === 2 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="2">
-          <text class="visibility-icon">🌍</text><text>所有人</text>
+          <text class="visibility-icon">🌍</text><text>所有人可见</text>
         </view>
       </view>
     </view>

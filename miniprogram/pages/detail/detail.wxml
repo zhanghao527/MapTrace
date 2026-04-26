@@ -64,7 +64,7 @@
       <text class="info-label">可见性</text>
       <view class="info-value-wrap">
         <text class="info-value visibility-value" bindtap="onVisibilityTap">
-          {{photo.visibility === 0 ? '🔒 仅自己' : photo.visibility === 1 ? '👥 互关可见' : '🌍 所有人'}}
+          {{photo.visibility === 0 ? '🔒 仅自己可见' : photo.visibility === 1 ? '👥 互关可见' : '🌍 所有人可见'}}
         </text>
         <text class="date-edit-icon" bindtap="onVisibilityTap">✎</text>
       </view>
