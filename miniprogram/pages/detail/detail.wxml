@@ -20,7 +20,7 @@
       <text class="action-text delete-text">删除</text>
     </view>
     <view class="like-btn {{photo.liked ? 'liked' : ''}}" bindtap="onPhotoLikeTap">
-      <text class="like-icon">{{photo.liked ? '♥' : '♡'}}</text>
+      <image class="like-icon" src="{{photo.liked ? '/images/icon-heart-fill.svg' : '/images/icon-heart.svg'}}" />
       <text class="like-text">{{photo.likeCount > 0 ? photo.likeCount : '点赞'}}</text>
     </view>
   </view>
@@ -33,7 +33,7 @@
         <picker mode="date" value="{{photo.photoDate}}" start="1900-01-01" end="{{todayDate}}" bindchange="onPhotoDateChange">
           <view class="date-edit-btn">
             <text class="info-value">{{photo.photoDate}}</text>
-            <text class="date-edit-icon">✎</text>
+            <image class="date-edit-icon" src="/images/icon-edit.svg" />
           </view>
         </picker>
       </view>
@@ -64,9 +64,9 @@
       <text class="info-label">可见性</text>
       <view class="info-value-wrap">
         <text class="info-value visibility-value" bindtap="onVisibilityTap">
-          {{photo.visibility === 0 ? '🔒 仅自己可见' : photo.visibility === 1 ? '👥 互关可见' : '🌍 所有人可见'}}
+          {{photo.visibility === 0 ? '仅自己可见' : photo.visibility === 1 ? '互关可见' : '所有人可见'}}
         </text>
-        <text class="date-edit-icon" bindtap="onVisibilityTap">✎</text>
+        <image class="date-edit-icon" src="/images/icon-edit.svg" bindtap="onVisibilityTap" />
       </view>
     </view>
   </view>
@@ -104,7 +104,7 @@
         <view class="comment-actions">
           <view class="comment-like {{item.liked ? 'liked' : ''}}"
             bindtap="onLikeTap" data-id="{{item.id}}" data-idx="{{index}}">
-            <text>{{item.liked ? '♥' : '♡'}}</text>
+            <image class="comment-like-icon" src="{{item.liked ? '/images/icon-heart-fill.svg' : '/images/icon-heart.svg'}}" />
             <text wx:if="{{item.likeCount > 0}}">{{item.likeCount}}</text>
           </view>
           <view class="comment-reply-btn" bindtap="onReplyTap"
@@ -117,7 +117,7 @@
         <!-- 展开回复 -->
         <view class="comment-expand" wx:if="{{item.replyCount > 0}}"
           bindtap="onToggleReplies" data-idx="{{index}}">
-          <text>{{item.showReplies ? '收起回复' : '展开' + item.replyCount + '条回复'}} {{item.showReplies ? '▴' : '▾'}}</text>
+          <text>{{item.showReplies ? '收起回复' : '展开' + item.replyCount + '条回复'}}</text>
         </view>
 
         <!-- 子评论 -->
@@ -140,7 +140,7 @@
               <view class="comment-actions">
                 <view class="comment-like {{reply.liked ? 'liked' : ''}}"
                   bindtap="onLikeTap" data-id="{{reply.id}}" data-idx="{{index}}" data-reply-idx="{{ri}}">
-                  <text>{{reply.liked ? '♥' : '♡'}}</text>
+                  <image class="comment-like-icon" src="{{reply.liked ? '/images/icon-heart-fill.svg' : '/images/icon-heart.svg'}}" />
                   <text wx:if="{{reply.likeCount > 0}}">{{reply.likeCount}}</text>
                 </view>
                 <view class="comment-reply-btn" bindtap="onReplyTap"

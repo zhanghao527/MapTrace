@@ -1,7 +1,7 @@
 /* ===== 页面容器 ===== */
 .rank-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--color-bg-page);
   padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
 }
 
@@ -103,7 +103,8 @@
   justify-content: center;
 }
 .rank-thumb-placeholder {
-  font-size: 48rpx;
+  width: 48rpx;
+  height: 48rpx;
   opacity: 0.3;
 }
 .rank-info {
@@ -114,9 +115,15 @@
   justify-content: space-between;
   min-width: 0;
 }
+/* ===== 区县名 + 城市 ===== */
+.rank-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
 .rank-district-name {
   font-size: 28rpx;
-  color: #333;
+  color: var(--color-text-primary);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -124,11 +131,8 @@
 }
 .rank-city-name {
   font-size: 22rpx;
-  color: #999;
-  margin-top: 4rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--color-text-placeholder);
+  flex-shrink: 0;
 }
 
 /* ===== 数据行 ===== */

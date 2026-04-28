@@ -80,8 +80,9 @@
 }
 
 .date-edit-icon {
-  font-size: 28rpx;
-  color: #07c160;
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.5;
 }
 
 .visibility-value {
@@ -168,12 +169,12 @@
 }
 
 .like-icon {
-  font-size: 36rpx;
-  color: #999;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .like-btn.liked .like-icon {
-  color: #ff4d4f;
+  /* filled SVG handles its own color */
 }
 
 .like-text {
@@ -278,6 +279,10 @@
   gap: 6rpx;
   font-size: 24rpx;
   color: #999;
+}
+.comment-like-icon {
+  width: 24rpx;
+  height: 24rpx;
 }
 
 .comment-like.liked {

@@ -1,6 +1,113 @@
-/* 全局样式 */
+/* ================================================================
+   地图时迹 - 全局设计系统
+   ================================================================
+   颜色、字号、间距、圆角统一在此定义，所有页面引用这些变量。
+   ================================================================ */
+
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background-color: #f5f5f5;
-  color: #333;
+  color: #222;
+
+  /* ---- 品牌色 ---- */
+  --color-primary: #07c160;
+  --color-primary-light: #e8f5ee;
+  --color-primary-bg: #f0f9f0;
+
+  /* ---- 功能色 ---- */
+  --color-danger: #e64340;
+  --color-danger-bg: #fff0f0;
+  --color-warning: #ff9500;
+  --color-warning-bg: #fff8e6;
+  --color-link: #576b95;
+
+  /* ---- 中性色 ---- */
+  --color-text-primary: #222;
+  --color-text-secondary: #666;
+  --color-text-placeholder: #999;
+  --color-text-disabled: #bbb;
+  --color-border: #e8e8e8;
+  --color-divider: #f0f0f0;
+  --color-bg-page: #f5f5f5;
+  --color-bg-card: #fff;
+  --color-bg-input: #f5f5f5;
+
+  /* ---- 字号 ---- */
+  --font-xs: 20rpx;
+  --font-sm: 24rpx;
+  --font-base: 28rpx;
+  --font-md: 30rpx;
+  --font-lg: 32rpx;
+  --font-xl: 36rpx;
+  --font-xxl: 44rpx;
+
+  /* ---- 间距 ---- */
+  --space-xs: 8rpx;
+  --space-sm: 16rpx;
+  --space-md: 24rpx;
+  --space-lg: 32rpx;
+  --space-xl: 48rpx;
+
+  /* ---- 圆角 ---- */
+  --radius-sm: 8rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-pill: 999rpx;
+  --radius-circle: 50%;
+}
+
+/* ================================================================
+   公共组件样式（避免各页面重复定义）
+   ================================================================ */
+
+/* ---- 卡片容器 ---- */
+.card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  margin: 0 var(--space-md) var(--space-sm);
+}
+
+/* ---- 段落标题 ---- */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
+}
+.section-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.section-subtitle {
+  font-size: var(--font-sm);
+  color: var(--color-text-placeholder);
+}
+.section-more {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+.section-more .section-subtitle {
+  color: var(--color-primary);
+}
+.section-arrow-sm {
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+}
+
+/* ---- 空状态 ---- */
+.empty-tip {
+  text-align: center;
+  color: var(--color-text-disabled);
+  font-size: var(--font-base);
+  padding: 80rpx 0;
+}
+
+/* ---- 加载提示 ---- */
+.loading-tip {
+  text-align: center;
+  color: var(--color-text-disabled);
+  font-size: var(--font-sm);
+  padding: var(--space-md) 0;
 }

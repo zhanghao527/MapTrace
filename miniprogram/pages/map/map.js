@@ -773,6 +773,7 @@ Page({
         // 存储区划信息用于上传
         const comp = addr.address_component || {};
         this._tapDistrict = comp.district || '';
+        this._tapCity = comp.city || '';
       },
       fail: (err) => {
         console.error('[Map] 逆地理编码失败', err);
@@ -780,6 +781,7 @@ Page({
           tapLocationName: lat.toFixed(4) + ', ' + lng.toFixed(4)
         });
         this._tapDistrict = '';
+        this._tapCity = '';
       }
     });
   },
@@ -818,8 +820,8 @@ Page({
           id: TEMP_MARKER_ID,
           latitude: this.data.tapLat,
           longitude: this.data.tapLng,
-          iconPath: '/images/marker-temp.png',
-          width: 44, height: 44,
+          iconPath: '/images/marker-transparent.png',
+          width: 1, height: 1,
           zIndex: 999,
           customCallout: { anchorY: 0, anchorX: 0, display: 'ALWAYS' }
         });
@@ -988,7 +990,8 @@ Page({
       uploadFile('/photo/upload', selectedImages[idx], {
         longitude: String(tapLng), latitude: String(tapLat),
         photoDate: uploadDate, locationName: tapLocationName || '',
-        district: this._tapDistrict || '', description: this.data.uploadDesc || '',
+        district: this._tapDistrict || '', city: this._tapCity || '',
+        description: this.data.uploadDesc || '',
         visibility: String(this.data.uploadVisibility)
       })
         .catch(() => { failed++; })

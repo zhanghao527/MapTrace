@@ -44,10 +44,11 @@
   white-space: nowrap;
 }
 .district-arrow {
-  font-size: 24rpx;
-  color: #999;
+  width: 24rpx;
+  height: 24rpx;
   flex-shrink: 0;
   margin-left: 4rpx;
+  opacity: 0.3;
 }
 
 /* ===== 排序切换 ===== */
@@ -695,7 +696,8 @@
   font-weight: 600;
 }
 .rank-badge-icon {
-  font-size: 22rpx;
+  width: 24rpx;
+  height: 24rpx;
 }
 .rank-badge.zero .rank-badge-num {
   color: #ccc;

@@ -5,7 +5,7 @@
     <view class="district-bar" bindtap="onDistrictTap" wx:if="{{districtName}}">
       <image class="district-icon" src="/images/icon-location.svg" />
       <text class="district-name">{{districtName}}</text>
-      <text class="district-arrow">▸</text>
+      <image class="district-arrow" src="/images/icon-arrow-right.svg" />
     </view>
     <view class="sort-toggle" catchtap="">
       <view class="sort-item {{sortBy === 'photoDate' ? 'active' : ''}}" catchtap="onSortToggle" data-sort="photoDate">拍摄时间</view>
@@ -48,11 +48,11 @@
           <view class="rank-bottom">
             <view class="rank-counts">
               <view class="rank-badge comment" wx:if="{{item.commentCount > 0}}">
-                <text class="rank-badge-icon">💬</text>
+                <image class="rank-badge-icon" src="/images/icon-message.svg" />
                 <text class="rank-badge-num">{{item.commentCount}}</text>
               </view>
               <view class="rank-badge like" wx:if="{{item.likeCount > 0}}">
-                <text class="rank-badge-icon">♥</text>
+                <image class="rank-badge-icon" src="/images/icon-heart-fill.svg" />
                 <text class="rank-badge-num">{{item.likeCount}}</text>
               </view>
               <view class="rank-badge zero" wx:if="{{(sortBy === 'commentCount' && item.commentCount === 0) || (sortBy === 'likeCount' && item.likeCount === 0)}}">

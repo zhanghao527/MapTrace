@@ -47,6 +47,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
                                 Double longitude, Double latitude,
                                 String locationName, String photoDate,
                                 String description, String district,
+                                String city,
                                 Integer visibility) {
         java.time.Instant start = java.time.Instant.now();
         try {
@@ -60,6 +61,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
             photo.setLatitude(latitude);
             photo.setLocationName(locationName != null ? locationName : "");
             photo.setDistrict(district != null ? district : "");
+            photo.setCity(city != null ? city : "");
             photo.setPhotoDate(LocalDate.parse(photoDate, DateTimeFormatter.ISO_LOCAL_DATE));
             photo.setDescription(description != null ? description : "");
             photo.setVisibility(visibility != null ? visibility : 2);

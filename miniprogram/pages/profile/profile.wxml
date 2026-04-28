@@ -44,7 +44,7 @@
     <view class="login-action">
       <view class="agreement-row" bindtap="onToggleAgreement">
         <view class="agreement-checkbox {{agreedPolicy ? 'checked' : ''}}">
-          <text wx:if="{{agreedPolicy}}" class="check-icon">✓</text>
+          <image wx:if="{{agreedPolicy}}" class="check-icon" src="/images/icon-check.svg" />
         </view>
         <text class="agreement-text">我已阅读并同意</text>
         <text class="agreement-link" catchtap="onViewAgreement" data-type="user">《用户服务协议》</text>
@@ -103,36 +103,36 @@
     <!-- 菜单列表（可折叠） -->
     <view class="menu-list" wx:if="{{showMenu}}">
       <view class="menu-item" bindtap="onGoFollowList">
-        <text class="menu-icon">👥</text>
+        <image class="menu-icon" src="/images/icon-friends.svg" />
         <text class="menu-text">我的关注</text>
-        <text class="menu-arrow">›</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" />
       </view>
       <view class="menu-item" bindtap="onGoMessages">
-        <text class="menu-icon">💬</text>
+        <image class="menu-icon" src="/images/icon-message.svg" />
         <text class="menu-text">我的消息</text>
         <view class="menu-badge" wx:if="{{unreadCount > 0}}">
           <text>{{unreadCount > 99 ? '99+' : unreadCount}}</text>
         </view>
-        <text class="menu-arrow">›</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" />
       </view>
       <view class="menu-item" bindtap="onGoMyReports">
-        <text class="menu-icon">🚩</text>
+        <image class="menu-icon" src="/images/icon-flag.svg" />
         <text class="menu-text">我的举报</text>
-        <text class="menu-arrow">›</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" />
       </view>
       <view class="menu-item" bindtap="onGoMyViolations">
-        <text class="menu-icon">⚠️</text>
+        <image class="menu-icon" src="/images/icon-alert.svg" />
         <text class="menu-text">我的违规</text>
-        <text class="menu-arrow">›</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" />
       </view>
       <view class="menu-item" wx:if="{{isAdmin}}" bindtap="onGoAdminReports">
-        <text class="menu-icon">🛡️</text>
+        <image class="menu-icon" src="/images/icon-shield.svg" />
         <text class="menu-text">举报处理台</text>
         <view class="menu-badge" wx:if="{{pendingReportCount > 0}}">
           <text>{{pendingReportCount > 99 ? '99+' : pendingReportCount}}</text>
         </view>
         <text class="menu-tag">管理员</text>
-        <text class="menu-arrow">›</text>
+        <image class="menu-arrow" src="/images/icon-arrow-right.svg" />
       </view>
     </view>
 
@@ -141,7 +141,7 @@
         <text class="section-title">足迹亮点</text>
         <view class="section-more" bindtap="onFootprintTap">
           <text class="section-subtitle">查看全部</text>
-          <text class="section-arrow-sm">▸</text>
+          <image class="section-arrow-sm" src="/images/icon-arrow-right.svg" />
         </view>
       </view>
       <view class="area-list">
@@ -171,11 +171,11 @@
             <text class="photo-date">{{item.photoDateLabel}}</text>
             <view class="photo-stats">
               <view class="stat-item" wx:if="{{item.likeCount > 0}}">
-                <text class="stat-icon like-icon">♥</text>
+                <image class="stat-icon like-icon" src="/images/icon-heart-fill.svg" />
                 <text class="stat-num">{{item.likeCount}}</text>
               </view>
               <view class="stat-item" wx:if="{{item.commentCount > 0}}">
-                <text class="stat-icon comment-icon">💬</text>
+                <image class="stat-icon comment-icon" src="/images/icon-message.svg" />
                 <text class="stat-num">{{item.commentCount}}</text>
               </view>
             </view>

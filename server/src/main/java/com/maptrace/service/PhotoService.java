@@ -15,6 +15,7 @@ public interface PhotoService extends IService<Photo> {
                          Double longitude, Double latitude,
                          String locationName, String photoDate,
                          String description, String district,
+                         String city,
                          Integer visibility);
 
     List<NearbyPhotoVO> findNearby(double lat, double lng, double radiusKm,

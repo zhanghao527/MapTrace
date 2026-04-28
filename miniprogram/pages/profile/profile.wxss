@@ -1,4 +1,4 @@
-.container { min-height: 100vh; background: #f5f6f8; }
+.container { min-height: 100vh; background: var(--color-bg-page); }
 
 /* ================================================================
    状态1：未登录 - 登录页
@@ -17,7 +17,7 @@
 .hero-bg {
   position: absolute; top: -200rpx; left: -100rpx; right: -100rpx;
   height: 600rpx; border-radius: 0 0 50% 50%;
-  background: linear-gradient(160deg, #e8f5ee 0%, #d4edda 40%, #c3e6cb 100%);
+  background: var(--color-primary-light);
   z-index: 0;
 }
 .hero-content {
@@ -26,8 +26,7 @@
 }
 .login-logo {
   width: 140rpx; height: 140rpx;
-  margin-bottom: 32rpx;
-  filter: drop-shadow(0 8rpx 24rpx rgba(7, 193, 96, 0.2));
+  margin-bottom: var(--space-lg);
 }
 .login-app-name {
   font-size: 52rpx; font-weight: 700; color: #1a2e1a;
@@ -51,8 +50,8 @@
 }
 .feature-icon-wrap {
   width: 80rpx; height: 80rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #e8f5ee, #d4edda);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin-right: 28rpx;
 }
@@ -77,10 +76,9 @@
 }
 .login-btn {
   width: 100%; height: 100rpx;
-  background: linear-gradient(135deg, #1aad57 0%, #07c160 50%, #06b556 100%);
-  border-radius: 20rpx; border: none;
+  background: var(--color-primary);
+  border-radius: var(--radius-lg); border: none;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 12rpx 40rpx rgba(7, 193, 96, 0.3);
   transition: all 0.2s ease;
 }
 .login-btn::after { display: none; }
@@ -115,7 +113,7 @@
   border-color: #07c160;
 }
 .check-icon {
-  font-size: 24rpx; color: #fff; font-weight: 700; line-height: 1;
+  width: 24rpx; height: 24rpx;
 }
 .agreement-text {
   font-size: 24rpx; color: #999; line-height: 1.6;
@@ -133,11 +131,11 @@
    状态3：已登录主页（保持原有样式不变）
    ================================================================ */
 .user-card {
-  margin: 24rpx; padding: 32rpx;
+  margin: var(--space-md); padding: var(--space-lg);
   display: flex; align-items: flex-start;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fcfa 100%);
-  border-radius: 24rpx;
-  box-shadow: 0 10rpx 30rpx rgba(7, 193, 96, 0.08);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   position: relative;
 }
 .avatar {
@@ -149,7 +147,7 @@
 .user-main { flex: 1; min-width: 0; }
 .user-info { margin-bottom: 24rpx; }
 .nickname {
-  font-size: 36rpx; font-weight: bold; color: #333;
+  font-size: var(--font-xl); font-weight: 600; color: var(--color-text-primary);
   display: block; margin-bottom: 10rpx;
 }
 .user-phone {
@@ -202,13 +200,13 @@
   display: flex; align-items: center; padding: 30rpx;
   border-bottom: 1rpx solid #f0f0f0;
 }
-.menu-icon { font-size: 40rpx; margin-right: 20rpx; }
+.menu-icon { width: 40rpx; height: 40rpx; margin-right: 20rpx; flex-shrink: 0; }
 .menu-text { flex: 1; font-size: 30rpx; color: #333; }
 .menu-tag {
   margin-right: 12rpx; padding: 6rpx 14rpx; border-radius: 999rpx;
   font-size: 20rpx; color: #07c160; background: rgba(7, 193, 96, 0.1);
 }
-.menu-arrow { font-size: 32rpx; color: #ccc; }
+.menu-arrow { width: 32rpx; height: 32rpx; flex-shrink: 0; opacity: 0.3; }
 .menu-badge {
   min-width: 36rpx; height: 36rpx; line-height: 36rpx;
   text-align: center; background: #ff4d4f; color: #fff;
@@ -227,7 +225,7 @@
   display: flex; align-items: center; gap: 4rpx;
 }
 .section-more .section-subtitle { color: #07c160; }
-.section-arrow-sm { font-size: 22rpx; color: #07c160; }
+.section-arrow-sm { width: 28rpx; height: 28rpx; }
 .empty-tip { text-align: center; color: #ccc; font-size: 28rpx; padding: 80rpx 0; }
 .loading-tip { text-align: center; color: #bbb; font-size: 24rpx; padding: 30rpx 0; }
 
@@ -252,7 +250,7 @@
 }
 .area-progress-inner {
   height: 100%; min-width: 12rpx;
-  background: linear-gradient(90deg, #36d17d, #07c160);
+  background: var(--color-primary);
   border-radius: 999rpx;
 }
 
@@ -273,9 +271,9 @@
 .photo-date { font-size: 22rpx; color: #999; }
 .photo-stats { display: flex; align-items: center; gap: 16rpx; font-size: 22rpx; color: #999; }
 .stat-item { display: flex; align-items: center; gap: 4rpx; line-height: 1; }
-.stat-icon { font-size: 24rpx; }
-.like-icon { color: #ff4d4f; }
-.comment-icon { font-size: 20rpx; }
+.stat-icon { width: 28rpx; height: 28rpx; }
+.like-icon { }
+.comment-icon { width: 24rpx; height: 24rpx; }
 .stat-num { font-size: 22rpx; color: #999; }
 
 .logout-btn {
@@ -344,7 +342,6 @@
 }
 .s-step.current .s-dot {
   background: #07c160; color: #fff;
-  box-shadow: 0 4rpx 20rpx rgba(7, 193, 96, 0.4);
 }
 .s-step.done .s-dot {
   background: #07c160; color: #fff;
@@ -454,9 +451,8 @@
   transition: all 0.3s ease;
 }
 .sheet-avatar-ring.has-avatar {
-  border: 6rpx solid #07c160;
-  background: linear-gradient(135deg, #e8f5ee, #d4edda);
-  box-shadow: 0 8rpx 40rpx rgba(7, 193, 96, 0.18);
+  border: 4rpx solid #07c160;
+  background: var(--color-primary-light);
 }
 .sheet-avatar-img {
   width: 220rpx; height: 220rpx; border-radius: 50%;
@@ -553,11 +549,10 @@
 }
 .sheet-primary-btn {
   width: 100% !important; height: 100rpx; line-height: 100rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #1aad57 0%, #07c160 50%, #06b556 100%);
-  color: #fff; font-size: 32rpx; font-weight: 600;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: #fff; font-size: var(--font-lg); font-weight: 600;
   letter-spacing: 2rpx; border: none;
-  box-shadow: 0 12rpx 40rpx rgba(7, 193, 96, 0.3);
   text-align: center;
   box-sizing: border-box;
   padding: 0;

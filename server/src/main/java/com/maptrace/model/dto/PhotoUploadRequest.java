@@ -34,6 +34,9 @@ public class PhotoUploadRequest {
     @Size(max = 100, message = "行政区划不能超过100个字符")
     private String district;
 
+    @Size(max = 100, message = "城市名不能超过100个字符")
+    private String city;
+
     @Size(max = 500, message = "描述不能超过500个字符")
     private String description;
 }

@@ -1,13 +1,13 @@
 .user-page { min-height: 100vh; background: #f5f5f5; }
 
 .user-header {
-  margin: 24rpx;
-  padding: 32rpx;
+  margin: var(--space-md);
+  padding: var(--space-lg);
   display: flex;
   align-items: flex-start;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fcfa 100%);
-  border-radius: 24rpx;
-  box-shadow: 0 10rpx 30rpx rgba(7, 193, 96, 0.08);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 .user-avatar {
   width: 120rpx;
@@ -79,7 +79,7 @@
   display: flex; align-items: center; gap: 4rpx;
 }
 .section-more .section-subtitle { color: #07c160; }
-.section-arrow-sm { font-size: 22rpx; color: #07c160; }
+.section-arrow-sm { width: 28rpx; height: 28rpx; }
 
 .area-card {
   margin: 0 24rpx 16rpx;
@@ -121,7 +121,7 @@
 .area-progress-inner {
   height: 100%;
   min-width: 12rpx;
-  background: linear-gradient(90deg, #36d17d, #07c160);
+  background: var(--color-primary);
   border-radius: 999rpx;
 }
 
@@ -178,7 +178,8 @@
   background: rgba(7, 193, 96, 0.08);
 }
 .msg-btn-icon {
-  font-size: 32rpx;
+  width: 32rpx;
+  height: 32rpx;
 }
 .msg-btn-text {
   font-size: 28rpx;

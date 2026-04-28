@@ -59,7 +59,9 @@
     <view class="upload-float-row">
       <image class="upload-float-icon" src="/images/icon-location.svg" />
       <text class="upload-float-addr">{{tapLocationName}}</text>
-      <view class="upload-float-close" bindtap="onCancelUpload">✕</view>
+      <view class="upload-float-close" bindtap="onCancelUpload">
+        <image class="upload-float-close-icon" src="/images/icon-close.svg" />
+      </view>
     </view>
     <!-- 第二行：拍摄日期 -->
     <view class="upload-float-row">
@@ -83,13 +85,13 @@
     <view class="upload-float-row visibility-row">
       <view class="visibility-options">
         <view class="visibility-opt {{uploadVisibility === 0 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="0">
-          <text class="visibility-icon">🔒</text><text>仅自己可见</text>
+          <text>仅自己可见</text>
         </view>
         <view class="visibility-opt {{uploadVisibility === 1 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="1">
-          <text class="visibility-icon">👥</text><text>互关可见</text>
+          <text>互关可见</text>
         </view>
         <view class="visibility-opt {{uploadVisibility === 2 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="2">
-          <text class="visibility-icon">🌍</text><text>所有人可见</text>
+          <text>所有人可见</text>
         </view>
       </view>
     </view>
@@ -100,7 +102,9 @@
           <block wx:for="{{selectedImages}}" wx:key="*this">
             <view class="upload-float-img-item">
               <image class="upload-float-img" src="{{item}}" mode="aspectFill" />
-              <view class="upload-float-img-remove" bindtap="onRemoveImage" data-idx="{{index}}">✕</view>
+              <view class="upload-float-img-remove" bindtap="onRemoveImage" data-idx="{{index}}">
+                <image class="upload-float-remove-icon" src="/images/icon-close.svg" />
+              </view>
             </view>
           </block>
           <view class="upload-float-img-add" bindtap="onTakePhoto" wx:if="{{uploadDateDisplay === '今天' && selectedImages.length < 9}}">
@@ -131,7 +135,7 @@
       </view>
       <text class="filter-sub" wx:if="{{filterLabel !== '全部时间'}}">{{filterLabel}}</text>
     </view>
-    <text class="filter-arrow">▸</text>
+    <image class="filter-arrow" src="/images/icon-arrow-right.svg" />
   </view>
 
   <!-- 空状态引导 -->
@@ -192,8 +196,13 @@
         <cover-view class="photo-arrow temp-arrow"></cover-view>
       </cover-view>
       <cover-view class="upload-callout" wx:else>
-        <cover-view class="upload-callout-text">上传位置</cover-view>
-        <cover-view class="upload-callout-arrow"></cover-view>
+        <cover-view class="upload-callout-card">
+          <cover-view class="upload-callout-icon">+</cover-view>
+          <cover-view class="upload-callout-label">上传到这里</cover-view>
+        </cover-view>
+        <cover-view class="photo-arrow-wrap">
+          <cover-view class="photo-arrow"></cover-view>
+        </cover-view>
       </cover-view>
     </cover-view>
   </map>
@@ -230,7 +239,9 @@
   <view class="filter-panel {{showFilterPanel ? 'show' : ''}}">
     <view class="panel-header">
       <text class="panel-title">穿梭时光</text>
-      <text class="panel-close" bindtap="onCloseFilter">✕</text>
+      <view class="panel-close" bindtap="onCloseFilter">
+        <image class="panel-close-icon" src="/images/icon-close.svg" />
+      </view>
     </view>
     <view class="panel-tabs">
       <view class="panel-tab {{panelTab === 'all' ? 'active' : ''}}" bindtap="onTabAll">全部时间</view>

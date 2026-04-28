@@ -60,7 +60,7 @@
           <text class="punishment-label">附加处罚</text>
           <picker mode="selector" range="{{punishmentOptions}}" range-key="label"
             value="{{punishmentIndex}}" bindchange="onPunishmentChange">
-            <text class="punishment-picker">{{punishmentOptions[punishmentIndex].label}} ▾</text>
+            <text class="punishment-picker">{{punishmentOptions[punishmentIndex].label}}</text>
           </picker>
         </view>
         <view class="punishment-row" wx:if="{{punishmentIndex > 1}}">

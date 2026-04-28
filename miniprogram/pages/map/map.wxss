@@ -151,23 +151,26 @@ page { background-color: transparent; }
   margin-top: 4rpx;
 }
 
-/* 上传位置文字气泡 */
+/* 上传位置标记 */
 .upload-callout {
   display: flex; flex-direction: column; align-items: center;
 }
-.upload-callout-text {
-  background: #fff;
-  color: #07c160;
-  font-size: 26rpx; font-weight: 600;
-  padding: 10rpx 20rpx;
+.upload-callout-card {
+  display: flex; align-items: center; gap: 8rpx;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 14rpx 24rpx;
   border-radius: 16rpx;
-  border: 2rpx solid #07c160;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
-.upload-callout-arrow {
-  width: 0; height: 0;
-  border-left: 12rpx solid transparent;
-  border-right: 12rpx solid transparent;
-  border-top: 12rpx solid #07c160;
+.upload-callout-icon {
+  width: 36rpx; height: 36rpx; line-height: 36rpx;
+  text-align: center;
+  background: #07c160; color: #fff;
+  border-radius: 50%;
+  font-size: 24rpx; font-weight: 600;
+}
+.upload-callout-label {
+  font-size: 24rpx; color: #333; font-weight: 500;
 }
 
 /* ===== 顶部轻提示 ===== */
@@ -289,14 +292,14 @@ page { background-color: transparent; }
   width: 32rpx; height: 32rpx; flex-shrink: 0; opacity: 0.6;
 }
 .hide-photos-inline-text {
-  flex: 1; font-size: 23rpx; color: #8a6d00;
+  flex: 1; font-size: var(--font-sm); color: #8a6d00;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .hide-photos-inline-btn {
   flex-shrink: 0;
-  font-size: 23rpx; color: #666;
+  font-size: var(--font-sm); color: #666;
   padding: 8rpx 18rpx;
-  background: rgba(0,0,0,0.05); border-radius: 24rpx;
+  background: rgba(0,0,0,0.05); border-radius: var(--radius-lg);
 }
 .hide-photos-inline-btn.primary {
   color: #fff; background: #07c160;
@@ -402,7 +405,12 @@ page { background-color: transparent; }
   border: 2rpx dashed #ccc; border-radius: 12rpx;
   display: flex; align-items: center; justify-content: center;
 }
-.upload-float-img-add:active { background: #f9f9f9; }
+.upload-float-close-icon {
+  width: 24rpx; height: 24rpx; opacity: 0.4;
+}
+.upload-float-remove-icon {
+  width: 16rpx; height: 16rpx;
+}
 .upload-float-add-icon { width: 36rpx; height: 36rpx; opacity: 0.4; }
 
 /* 可见性选择 */
@@ -423,7 +431,7 @@ page { background-color: transparent; }
   border-color: #07c160; font-weight: 600;
 }
 .visibility-opt:active { opacity: 0.7; }
-.visibility-icon { font-size: 24rpx; }
+/* 可见性选择（图标已移除，纯文字） */
 
 /* 上传按钮 */
 .upload-float-submit {
@@ -489,7 +497,7 @@ page { background-color: transparent; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .filter-arrow {
-  font-size: 28rpx; color: #07c160; flex-shrink: 0; margin-left: 12rpx;
+  width: 28rpx; height: 28rpx; flex-shrink: 0; margin-left: 12rpx; opacity: 0.6;
 }
 .filter-card.hidden {
   opacity: 0; pointer-events: none;
@@ -578,9 +586,12 @@ page { background-color: transparent; }
   font-size: 30rpx; font-weight: 700; color: #1a1a1a;
 }
 .panel-close {
-  font-size: 32rpx; color: #999; padding: 8rpx;
+  padding: 8rpx;
   width: 50rpx; height: 50rpx;
   display: flex; align-items: center; justify-content: center;
+}
+.panel-close-icon {
+  width: 28rpx; height: 28rpx; opacity: 0.4;
 }
 
 .panel-tabs {

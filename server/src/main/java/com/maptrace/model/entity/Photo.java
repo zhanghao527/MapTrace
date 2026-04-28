@@ -35,6 +35,9 @@ public class Photo {
     /** 行政区划（区/县） */
     private String district;
 
+    /** 所属城市 */
+    private String city;
+
     /** 可见性: 0=仅自己 1=互关可见 2=所有人可见 */
     private Integer visibility;
 

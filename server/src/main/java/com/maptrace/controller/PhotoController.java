@@ -35,13 +35,14 @@ public class PhotoController {
             @RequestParam("photoDate") String photoDate,
             @RequestParam(value = "locationName", required = false) String locationName,
             @RequestParam(value = "district", required = false) String district,
+            @RequestParam(value = "city", required = false) String city,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "visibility", required = false, defaultValue = "2") Integer visibility,
             @RequestAttribute("userId") Long userId) {
         userService.checkBanUpload(userId);
         ThrowUtils.throwIf(file.isEmpty(), ErrorCode.PARAMS_ERROR, "请选择要上传的图片");
         PhotoDetailVO photo = photoService.upload(
-                file, userId, longitude, latitude, locationName, photoDate, description, district, visibility);
+                file, userId, longitude, latitude, locationName, photoDate, description, district, city, visibility);
         return Result.success(photo);
     }
 
