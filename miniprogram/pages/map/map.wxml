@@ -37,12 +37,12 @@
       <image class="toolbar-icon-img" src="/images/icon-refresh.svg" />
     </view>
     <view class="toolbar-btn {{photosHidden ? 'toolbar-btn-off' : ''}}" bindtap="onTogglePhotos">
-      <image class="toolbar-icon-img" src="/images/icon-camera.svg" />
+      <image class="toolbar-icon-img" src="/images/icon-album.svg" />
       <view class="toolbar-slash" wx:if="{{photosHidden}}"></view>
     </view>
 
     <view class="toolbar-btn" bindtap="onUploadHintTap">
-      <image class="toolbar-icon-img" src="/images/icon-plus.svg" />
+      <image class="toolbar-icon-img" src="/images/icon-camera.svg" />
     </view>
   </view>
 
@@ -63,13 +63,19 @@
         <image class="upload-float-close-icon" src="/images/icon-close.svg" />
       </view>
     </view>
-    <!-- 第二行：拍摄日期 -->
+    <!-- 第二行：拍摄日期 + 可见性 -->
     <view class="upload-float-row">
       <picker mode="date" value="{{uploadDate}}" start="1900-01-01" end="{{todayDate}}" bindchange="onUploadDateChange">
         <view class="upload-float-date">
           <image class="upload-float-icon-sm" src="/images/icon-calendar.svg" />
           <text>拍摄于</text>
           <text>{{uploadDateDisplay}}</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{visibilityOptions}}" range-key="label" value="{{uploadVisibility}}" bindchange="onVisibilityChange">
+        <view class="upload-float-visibility">
+          <text>{{visibilityOptions[uploadVisibility].label}}</text>
+          <image class="upload-float-icon-sm" src="/images/icon-arrow-right.svg" />
         </view>
       </picker>
     </view>
@@ -79,20 +85,6 @@
         <textarea class="upload-float-desc" placeholder="添加描述（可选）" value="{{uploadDesc}}" bindinput="onDescInput"
           maxlength="200" auto-height />
         <text class="upload-float-desc-count">{{uploadDescLength}}/200</text>
-      </view>
-    </view>
-    <!-- 可见性选择 -->
-    <view class="upload-float-row visibility-row">
-      <view class="visibility-options">
-        <view class="visibility-opt {{uploadVisibility === 0 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="0">
-          <text>仅自己可见</text>
-        </view>
-        <view class="visibility-opt {{uploadVisibility === 1 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="1">
-          <text>互关可见</text>
-        </view>
-        <view class="visibility-opt {{uploadVisibility === 2 ? 'active' : ''}}" bindtap="onVisibilityTap" data-v="2">
-          <text>所有人可见</text>
-        </view>
       </view>
     </view>
     <!-- 照片选择 + 上传按钮 -->
@@ -203,12 +195,13 @@
         <cover-view class="photo-arrow-wrap">
           <cover-view class="photo-arrow"></cover-view>
         </cover-view>
+        <cover-view class="upload-callout-dot"></cover-view>
       </cover-view>
     </cover-view>
   </map>
 
   <!-- 悬浮底部栏 -->
-  <view class="floating-bar {{showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}">
+  <view class="floating-bar {{showUploadBar || showHidePhotosBar || showFilterPanel ? 'hidden' : ''}}" catchtap="">
     <view class="bar-btn" bindtap="onChatTap">
       <view class="bar-icon-circle">
         <image class="bar-icon-img" src="/images/icon-chat.svg" />
@@ -217,9 +210,9 @@
         <text>{{unreadTotal > 99 ? '99+' : unreadTotal}}</text>
       </view>
     </view>
-    <view class="bar-btn bar-btn-main" bindtap="onFilterTap">
-      <view class="bar-icon-circle main">
-        <image class="bar-icon-img main" src="/images/icon-clock.svg" />
+    <view class="bar-btn" bindtap="onFilterTap">
+      <view class="bar-icon-circle">
+        <image class="bar-icon-img" src="/images/icon-clock.svg" />
       </view>
     </view>
     <view class="bar-btn" bindtap="onCommunityTap">
@@ -293,6 +286,25 @@
     <view class="panel-actions">
       <view class="panel-reset" bindtap="onFilterReset">重置</view>
       <view class="panel-confirm" bindtap="onFilterConfirm">确认穿梭</view>
+    </view>
+  </view>
+
+  <!-- 上传引导动画遮罩 -->
+  <view class="guide-overlay {{showUploadGuide ? 'show' : ''}}" bindtap="onGuideClose">
+    <view class="guide-scene" catchtap="">
+      <!-- 涟漪 -->
+      <view class="guide-ripple"></view>
+      <view class="guide-ripple guide-ripple-2"></view>
+      <!-- 落点 -->
+      <view class="guide-dot"></view>
+      <!-- 手指 -->
+      <view class="guide-hand">
+        <image class="guide-hand-img" src="/images/icon-hand-tap.svg" />
+      </view>
+    </view>
+    <view class="guide-text-area">
+      <text class="guide-text">点击地图任意位置</text>
+      <text class="guide-subtext">选择你要上传照片的地点</text>
     </view>
   </view>
 </view>

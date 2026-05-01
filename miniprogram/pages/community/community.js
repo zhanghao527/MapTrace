@@ -376,14 +376,18 @@ Page({
 
   onAxisTap() {
     if (this.data.timelineExpanded) return;
-    // 计算滚动到当前激活日期
-    const activeId = this.data.activeDate
-      ? 'pd-' + this.data.activeDate.replace(/-/g, '')
-      : '';
-    this.setData({
-      timelineExpanded: true,
-      panelScrollTo: activeId
-    });
+    // 记住当前滚动位置
+    const query = wx.createSelectorQuery();
+    query.selectViewport().scrollOffset((res) => {
+      this._savedScrollTop = res.scrollTop || 0;
+      const activeId = this.data.activeDate
+        ? 'pd-' + this.data.activeDate.replace(/-/g, '')
+        : '';
+      this.setData({
+        timelineExpanded: true,
+        panelScrollTo: activeId
+      });
+    }).exec();
   },
 
   onPanelDateTap(e) {
@@ -406,6 +410,12 @@ Page({
 
   onPanelMaskTap() {
     this.setData({ timelineExpanded: false });
+    // 恢复滚动位置
+    if (this._savedScrollTop) {
+      setTimeout(() => {
+        wx.pageScrollTo({ scrollTop: this._savedScrollTop, duration: 0 });
+      }, 50);
+    }
   },
 
   preventTouchMove() {

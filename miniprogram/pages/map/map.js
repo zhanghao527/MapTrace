@@ -123,6 +123,13 @@ Page({
     unreadTotal: 0,
     // 可见性选择（0=仅自己可见, 1=互关可见, 2=所有人可见）
     uploadVisibility: 2,
+    visibilityOptions: [
+      { label: '仅自己可见' },
+      { label: '互关可见' },
+      { label: '所有人可见' }
+    ],
+    // 上传引导动画
+    showUploadGuide: false,
     // 拖拽状态（已移除）
   },
 
@@ -860,8 +867,8 @@ Page({
     this.setData({ uploadDesc: val, uploadDescLength: val.length });
   },
 
-  onVisibilityTap(e) {
-    const v = parseInt(e.currentTarget.dataset.v);
+  onVisibilityChange(e) {
+    const v = parseInt(e.detail.value);
     this.setData({ uploadVisibility: v });
   },
 
@@ -939,11 +946,14 @@ Page({
     if (!uploadDate) { this._showToast('请选择日期'); return; }
 
     // 二次确认拍摄日期
+    const dateText = this.data.uploadDateDisplay === '今天'
+      ? '今天（' + uploadDate + '）'
+      : uploadDate;
     wx.showModal({
-      title: '确认拍摄日期',
-      content: '拍摄日期为「' + (this.data.uploadDateDisplay === '今天' ? '今天 (' + uploadDate + ')' : uploadDate) + '」，确认上传？',
-      confirmText: '确认上传',
-      cancelText: '修改日期',
+      title: '确认上传',
+      content: '拍摄日期：' + dateText,
+      confirmText: '上传',
+      cancelText: '返回修改',
       success: (res) => {
         if (!res.confirm) return;
         this._doUpload();
@@ -1092,7 +1102,20 @@ Page({
   },
 
   onUploadHintTap() {
-    this._showToast('点击地图任意位置，即可在该位置上传照片');
+    if (this.data.showUploadGuide) return;
+    this.setData({ showUploadGuide: true });
+    // 自动消失（用户也可以点击关闭）
+    this._guideTimer = setTimeout(() => {
+      this.setData({ showUploadGuide: false });
+    }, 6000);
+  },
+
+  onGuideClose() {
+    this.setData({ showUploadGuide: false });
+    if (this._guideTimer) {
+      clearTimeout(this._guideTimer);
+      this._guideTimer = null;
+    }
   },
 
   /** 顶部区县名点击 → 选择城市/搜索 */

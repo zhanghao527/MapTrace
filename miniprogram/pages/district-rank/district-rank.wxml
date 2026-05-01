@@ -1,8 +1,14 @@
 <view class="rank-page">
 
-  <!-- 统计摘要 -->
-  <view class="stats-bar" wx:if="{{districtCount > 0}}">
-    <text class="stats-text">共覆盖 {{districtCount}} 个区县 · {{totalPhotos}} 张照片</text>
+  <!-- 顶部：统计 + 排序 -->
+  <view class="rank-top-bar">
+    <text class="stats-text" wx:if="{{districtCount > 0}}">共 {{districtCount}} 个区县 · {{totalPhotos}} 张照片</text>
+    <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onSortChange">
+      <view class="sort-picker">
+        <text class="sort-picker-label">{{sortOptions[sortIndex].label}}</text>
+        <image class="sort-picker-arrow" src="/images/icon-arrow-right.svg" />
+      </view>
+    </picker>
   </view>
 
   <!-- 排行列表 -->
@@ -22,8 +28,24 @@
             <text class="rank-city-name" wx:if="{{item.city}}">{{item.city}}</text>
           </view>
           <view class="rank-data-row">
-            <text class="rank-data-num">{{item.photoCount}}</text>
-            <text class="rank-data-label">张照片</text>
+            <!-- 根据排序维度显示对应数据 -->
+            <view class="rank-data-item highlight">
+              <text class="rank-data-num" wx:if="{{sortBy === 'photoCount'}}">{{item.photoCount}}</text>
+              <text class="rank-data-num" wx:elif="{{sortBy === 'likeCount'}}">{{item.likeCount}}</text>
+              <text class="rank-data-num" wx:elif="{{sortBy === 'commentCount'}}">{{item.commentCount}}</text>
+              <text class="rank-data-num" wx:elif="{{sortBy === 'createTime'}}">{{item.latestCreateTime}}</text>
+              <text class="rank-data-num" wx:elif="{{sortBy === 'photoDate'}}">{{item.latestPhotoDate}}</text>
+              <text class="rank-data-label" wx:if="{{sortBy === 'photoCount'}}">张照片</text>
+              <text class="rank-data-label" wx:elif="{{sortBy === 'likeCount'}}">次点赞</text>
+              <text class="rank-data-label" wx:elif="{{sortBy === 'commentCount'}}">条评论</text>
+              <text class="rank-data-label" wx:elif="{{sortBy === 'createTime'}}">最近上传</text>
+              <text class="rank-data-label" wx:elif="{{sortBy === 'photoDate'}}">最近拍摄</text>
+            </view>
+            <!-- 非照片数排序时，补充显示照片数 -->
+            <view class="rank-data-item" wx:if="{{sortBy !== 'photoCount'}}">
+              <text class="rank-data-num">{{item.photoCount}}</text>
+              <text class="rank-data-label">张</text>
+            </view>
           </view>
         </view>
       </view>
@@ -32,7 +54,7 @@
 
   <!-- 空状态 -->
   <view class="empty" wx:if="{{isEmpty && !loading}}">
-    <text class="empty-text">还没有区县上传照片，快来成为第一个吧</text>
+    <text class="empty-text">还没有区县上传照片</text>
   </view>
 
   <!-- 加载状态 -->

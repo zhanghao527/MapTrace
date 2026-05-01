@@ -2,6 +2,15 @@ const { request } = require('../../utils/request');
 
 Page({
   data: {
+    sortBy: 'photoCount',
+    sortOptions: [
+      { value: 'photoCount', label: '照片数' },
+      { value: 'createTime', label: '上传时间' },
+      { value: 'photoDate', label: '拍摄时间' },
+      { value: 'likeCount', label: '点赞数' },
+      { value: 'commentCount', label: '评论数' }
+    ],
+    sortIndex: 0,
     rankList: [],
     districtCount: 0,
     totalPhotos: 0,
@@ -13,10 +22,18 @@ Page({
     this.loadRanking();
   },
 
+  onSortChange(e) {
+    const idx = parseInt(e.detail.value);
+    const sortBy = this.data.sortOptions[idx].value;
+    if (sortBy === this.data.sortBy) return;
+    this.setData({ sortIndex: idx, sortBy, rankList: [] });
+    this.loadRanking();
+  },
+
   loadRanking() {
     this.setData({ loading: true, isEmpty: false });
     request('/photo/district-ranking', 'GET', {
-      sortBy: 'photoCount',
+      sortBy: this.data.sortBy,
       limit: 50
     }).then(res => {
       const data = res.data || {};
@@ -33,7 +50,6 @@ Page({
     });
   },
 
-  /** 点击区县 → 跳转到该区县的社区页 */
   onDistrictTap(e) {
     const district = e.currentTarget.dataset.district;
     const city = e.currentTarget.dataset.city || '';

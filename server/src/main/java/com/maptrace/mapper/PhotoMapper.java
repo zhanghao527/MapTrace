@@ -353,6 +353,10 @@ public interface PhotoMapper extends BaseMapper<Photo> {
             COUNT(*) AS photo_count,
             COUNT(DISTINCT p.user_id) AS user_count,
             SUM(CASE WHEN DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END) AS today_count,
+            IFNULL(SUM((SELECT COUNT(*) FROM t_photo_like pl WHERE pl.photo_id = p.id)), 0) AS like_count,
+            IFNULL(SUM((SELECT COUNT(*) FROM t_comment c WHERE c.photo_id = p.id AND c.deleted = 0)), 0) AS comment_count,
+            DATE_FORMAT(MAX(p.create_time), '%Y-%m-%d') AS latest_create_time,
+            DATE_FORMAT(MAX(p.photo_date), '%Y-%m-%d') AS latest_photo_date,
             (SELECT COALESCE(p2.thumbnail_url, p2.image_url)
              FROM t_photo p2
              WHERE p2.deleted = 0 AND p2.visibility = 2 AND p2.district = p.district
@@ -362,13 +366,25 @@ public interface PhotoMapper extends BaseMapper<Photo> {
           AND p.visibility = 2
           AND p.district IS NOT NULL AND p.district != ''
         GROUP BY p.district
+        <if test="sortBy == 'createTime'">
+        ORDER BY latest_create_time DESC, photo_count DESC
+        </if>
+        <if test="sortBy == 'photoDate'">
+        ORDER BY latest_photo_date DESC, photo_count DESC
+        </if>
+        <if test="sortBy == 'likeCount'">
+        ORDER BY like_count DESC, photo_count DESC
+        </if>
+        <if test="sortBy == 'commentCount'">
+        ORDER BY comment_count DESC, photo_count DESC
+        </if>
         <if test="sortBy == 'userCount'">
         ORDER BY user_count DESC, photo_count DESC
         </if>
         <if test="sortBy == 'todayCount'">
         ORDER BY today_count DESC, photo_count DESC
         </if>
-        <if test="sortBy != 'userCount' and sortBy != 'todayCount'">
+        <if test="sortBy != 'createTime' and sortBy != 'photoDate' and sortBy != 'likeCount' and sortBy != 'commentCount' and sortBy != 'userCount' and sortBy != 'todayCount'">
         ORDER BY photo_count DESC, user_count DESC
         </if>
         LIMIT #{limit}

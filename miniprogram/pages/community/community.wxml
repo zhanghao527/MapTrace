@@ -9,7 +9,6 @@
     </view>
     <view class="sort-toggle" catchtap="">
       <view class="sort-item {{sortBy === 'photoDate' ? 'active' : ''}}" catchtap="onSortToggle" data-sort="photoDate">拍摄时间</view>
-      <view class="sort-item {{sortBy === 'createTime' ? 'active' : ''}}" catchtap="onSortToggle" data-sort="createTime">上传时间</view>
       <view class="sort-item {{sortBy === 'commentCount' ? 'active' : ''}}" catchtap="onSortToggle" data-sort="commentCount">评论数</view>
       <view class="sort-item {{sortBy === 'likeCount' ? 'active' : ''}}" catchtap="onSortToggle" data-sort="likeCount">点赞数</view>
     </view>
@@ -17,7 +16,7 @@
 
   <!-- 统计摘要（仅时间轴模式） -->
   <view class="stats-bar" wx:if="{{statTotal > 0 && !isRankMode}}">
-    <text class="stats-text">共 {{statTotal}} 张照片 · 包含 {{statDays}} 个日期 · {{statBusiestDay}}最活跃</text>
+    <text class="stats-text">当前地区共有 {{statTotal}} 张照片 · 包含 {{statDays}} 个日期</text>
   </view>
 
   <!-- 空状态 -->
@@ -89,6 +88,11 @@
           <view class="tl-axis-col tl-axis-tap" bindtap="onAxisTap">
             <view class="tl-line tl-line-full"></view>
             <view class="tl-dot-photo {{activePhotoId == photo.id ? 'active' : ''}}"></view>
+            <!-- 第一组第一张照片旁显示提示 -->
+            <view class="tl-axis-hint" wx:if="{{gi === 0 && index === 0}}">
+              <text class="tl-axis-hint-arrow">↑</text>
+              <text class="tl-axis-hint-text">点 击 绿 点 可 选 择 时 间</text>
+            </view>
           </view>
           <view class="tl-card-wrap">
             <view class="tl-connector"></view>

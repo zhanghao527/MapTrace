@@ -14,6 +14,14 @@ public class DistrictRankVO {
     private Long userCount;
     /** 今日上传数 */
     private Long todayCount;
+    /** 总点赞数 */
+    private Long likeCount;
+    /** 总评论数 */
+    private Long commentCount;
+    /** 最新上传时间 */
+    private String latestCreateTime;
+    /** 最新拍摄日期 */
+    private String latestPhotoDate;
     /** 最新一张照片的缩略图 */
     private String latestThumbUrl;
     /** 排名（由 Service 层赋值） */

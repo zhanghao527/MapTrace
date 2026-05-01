@@ -5,8 +5,12 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
 }
 .community-page.page-locked {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   overflow: hidden;
-  height: 100vh;
 }
 
 /* ===== 顶部栏 ===== */
@@ -204,6 +208,38 @@
   width: 18rpx;
   height: 18rpx;
   background: #07c160;
+}
+
+/* ===== 轴线提示文案 ===== */
+.tl-axis-hint {
+  position: absolute;
+  top: 60rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  animation: hintPulse 2.5s ease-in-out infinite;
+}
+.tl-axis-hint-arrow {
+  font-size: 28rpx;
+  color: #07c160;
+  line-height: 1;
+}
+.tl-axis-hint-text {
+  writing-mode: vertical-rl;
+  font-size: 20rpx;
+  color: #999;
+  letter-spacing: 8rpx;
+  line-height: 1;
+  white-space: nowrap;
+}
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 /* ===== 轴线终止圆点 ===== */
